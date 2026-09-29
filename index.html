@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<title>ʍǟӼӼʏ Trading AI</title>
+
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#070b12;
+  --card:#0d1420;
+  --card2:#111b29;
+  --line:#1d2a3b;
+  --text:#eef4ff;
+  --muted:#7f91aa;
+  --green:#22d39b;
+  --red:#ff5d73;
+  --blue:#5d8cff;
+  --gold:#f4c95d;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,Arial,sans-serif;
+  color:var(--text);
+}
+
+button{
+  font:inherit;
+  color:inherit;
+  border:0;
+  cursor:pointer;
+}
+
+.app{
+  max-width:480px;
+  margin:auto;
+  min-height:100vh;
+  padding:18px 16px 88px;
+  background:linear-gradient(180deg,#09101a 0,#070b12 55%);
+}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.brand{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.logo{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#5d8cff,#22d39b);
+  display:grid;
+  place-items:center;
+  font-weight:900;
+  color:#061018;
+}
+
+.brand b{
+  font-size:17px;
+}
+
+.brand small{
+  display:block;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+.pill{
+  padding:7px 10px;
+  border:1px solid var(--line);
+  background:#0d1521;
+  border-radius:999px;
+  font-size:11px;
+  color:#a9bad1;
+}
+
+.pair{
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  margin-bottom:12px;
+}
+
+.pair h1{
+  font-size:25px;
+  margin:0;
+}
+
+.pair span{
+  color:var(--green);
+  font-size:13px;
+}
+
+.chart{
+  height:205px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:radial-gradient(circle at 70% 20%,#13223a,#0a1019 62%);
+  position:relative;
+  overflow:hidden;
+  margin-bottom:14px;
+}
+
+.grid{
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(#ffffff08 1px,transparent 1px),
+    linear-gradient(90deg,#ffffff08 1px,transparent 1px);
+  background-size:25% 25%;
+}
+
+.ema{
+  position:absolute;
+  left:0;
+  right:0;
+  top:52%;
+  height:2px;
+  background:var(--gold);
+  box-shadow:0 0 10px #f4c95d55;
+}
+
+.ema label{
+  position:absolute;
+  right:8px;
+  top:-18px;
+  color:var(--gold);
+  font-size:10px;
+}
+
+.candles{
+  position:absolute;
+  inset:18px;
+  display:flex;
+  align-items:stretch;
+  gap:8px;
+}
+
+.c{
+  flex:1;
+  position:relative;
+}
+
+.wick{
+  position:absolute;
+  left:50%;
+  width:1px;
+  top:15%;
+  bottom:12%;
+  background:#aebbd0;
+}
+
+.body{
+  position:absolute;
+  left:25%;
+  right:25%;
+  top:35%;
+  height:30%;
+  border-radius:2px;
+  background:var(--green);
+}
+
+.red .body{
+  background:var(--red);
+}
+
+.up .body{
+  top:24%;
+  height:38%;
+}
+
+.down .body{
+  top:42%;
+  height:31%;
+}
+
+.signal{
+  border:1px solid #24415b;
+  background:linear-gradient(145deg,#0e1b29,#0b131e);
+  border-radius:20px;
+  padding:17px;
+  margin-bottom:14px;
+}
+
+.sighead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.badge{
+  background:#0e3028;
+  color:var(--green);
+  padding:7px 10px;
+  border-radius:10px;
+  font-weight:800;
+  font-size:12px;
+}
+
+.sig{
+  font-size:30px;
+  font-weight:900;
+  margin:9px 0 4px;
+}
+
+.sub{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.row{
+  display:flex;
+  gap:8px;
+  margin-top:15px;
+}
+
+.metric{
+  flex:1;
+  background:#0a111b;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+}
+
+.metric small{
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+}
+
+.metric b{
+  display:block;
+  margin-top:4px;
+  font-size:13px;
+}
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+
+.action{
+  padding:13px;
+  border-radius:13px;
+  background:#121e2e;
+  border:1px solid var(--line);
+  font-weight:700;
+}
+
+.primary{
+  background:linear-gradient(135deg,#5d8cff,#4167d9);
+  border:0;
+}
+
+.section{
+  margin-top:18px;
+}
+
+.sectionhead{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:9px;
+}
+
+.sectionhead b{
+  font-size:14px;
+}
+
+.sectionhead span{
+  font-size:11px;
+  color:var(--muted);
+}
+
+.premium{
+  border:1px solid #54471e;
+  background:linear-gradient(135deg,#17170e,#0f151c);
+  border-radius:17px;
+  padding:15px;
+}
+
+.premium b{
+  color:var(--gold);
+}
+
+.premium p{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+  margin:7px 0 12px;
+}
+
+.premium button{
+  background:var(--gold);
+  color:#171207;
+  padding:10px 14px;
+  border-radius:11px;
+  font-weight:800;
+}
+
+.bottom{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  max-width:480px;
+  margin:auto;
+  background:#0a1019ee;
+  backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  padding:10px 8px calc(10px + env(safe-area-inset-bottom));
+}
+
+.nav{
+  background:transparent;
+  color:var(--muted);
+  font-size:10px;
+  padding:4px;
+}
+
+.nav.active{
+  color:#fff;
+}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:78px;
+  transform:translateX(-50%);
+  background:#162438;
+  border:1px solid var(--line);
+  padding:10px 14px;
+  border-radius:12px;
+  font-size:12px;
+  display:none;
+  white-space:nowrap;
+}
+
+.toast.show{
+  display:block;
+}
+
+.expired{
+  color:var(--red)!important;
+}
+</style>
+</head>
+
+<body>
+
+<main class="app">
+
+<header class="top">
+
+  <div class="brand">
+
+    <div class="logo">
+      AI
+    </div>
+
+    <div>
+      <b>ʍǟӼӼʏ Trading AI</b>
+      <small>Signal assistant</small>
+    </div>
+
+  </div>
+
+  <div class="pill">
+    PAPER MODE
+  </div>
+
+</header>
+
+
+<div class="pair">
+
+  <div>
+
+    <h1>EUR/USD</h1>
+
+    <div class="sub">
+      1-minute analysis • 3-minute expiry
+    </div>
+
+  </div>
+
+  <span>
+    ● TEST FEED
+  </span>
+
+</div>
+
+
+<section class="chart">
+
+  <div class="grid"></div>
+
+  <div class="ema">
+    <label>EMA 50</label>
+  </div>
+
+  <div class="candles">
+
+    <div class="c red down">
+      <i class="wick"></i>
+      <i class="body"></i>
+    </div>
+
+    <div class="c up">
+      <i class="wick"></i>
+      <i class="body"></i>
+    </div>
+
+    <div class="c red">
+      <i class="wick"></i>
+      <i class="body"></i>
+    </div>
+
+    <div class="c up">
+      <i class="wick"></i>
+      <i class="body"></i>
+    </div>
+
+    <div class="c up">
+      <i class="wick"></i>
+      <i class="body"></i>
+    </div>
+
+    <div class="c red down">
+      <i class="wick"></i>
+      <i class="body"></i>
+    </div>
+
+    <div class="c up">
+      <i class="wick"></i>
+      <i class="body"></i>
+    </div>
+
+    <div class="c up">
+      <i class="wick"></i>
+      <i class="body"></i>
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="signal">
+
+  <div class="sighead">
+
+    <div class="sub">
+      LATEST SIGNAL
+    </div>
+
+    <div class="badge" id="badge">
+      FRESH
+    </div>
+
+  </div>
+
+  <div class="sig" id="sig">
+    CALL
+  </div>
+
+  <div class="sub">
+    Confirmation: EMA + S/R + candle reaction
+  </div>
+
+  <div class="row">
+
+    <div class="metric">
+
+      <small>
+        Entry window
+      </small>
+
+      <b id="timer">
+        12s
+      </b>
+
+    </div>
+
+    <div class="metric">
+
+      <small>
+        Expiry
+      </small>
+
+      <b>
+        3 min
+      </b>
+
+    </div>
+
+    <div class="metric">
+
+      <small>
+        Risk
+      </small>
+
+      <b>
+        1%
+      </b>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<div class="actions">
+
+  <button class="action primary" onclick="analyze()">
+    Analyze now
+  </button>
+
+  <button class="action" onclick="notifyMe()">
+    🔔 Alert
+  </button>
+
+  <button class="action" onclick="risk()">
+    Risk calculator
+  </button>
+
+  <button class="action" onclick="history()">
+    Signal history
+  </button>
+
+</div>
+
+
+<section class="section">
+
+  <div class="sectionhead">
+
+    <b>
+      Premium Signals
+    </b>
+
+    <span>
+      Coming next
+    </span>
+
+  </div>
+
+  <div class="premium">
+
+    <b>
+      ⚡ Premium access
+    </b>
+
+    <p>
+      Private signal feed, performance history and advanced filters will be added after the testing engine is connected.
+    </p>
+
+    <button onclick="premium()">
+      Join waitlist
+    </button>
+
+  </div>
+
+</section>
+
+</main>
+
+
+<nav class="bottom">
+
+  <button class="nav active">
+    ⌂<br>
+    Dashboard
+  </button>
+
+  <button class="nav">
+    ◈<br>
+    Markets
+  </button>
+
+  <button class="nav">
+    ◉<br>
+    Signals
+  </button>
+
+  <button class="nav">
+    ◎<br>
+    Profile
+  </button>
+
+</nav>
+
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+
+let left = 12;
+
+let interval = setInterval(() => {
+
+  if(left > 0){
+
+    left--;
+
+    document.getElementById("timer").textContent =
+      left + "s";
+
+  }
+
+  else{
+
+    document.getElementById("timer").textContent =
+      "EXPIRED";
+
+    document.getElementById("timer").className =
+      "expired";
+
+    document.getElementById("badge").textContent =
+      "EXPIRED";
+
+    document.getElementById("badge").className =
+      "badge expired";
+
+    clearInterval(interval);
+
+  }
+
+},1000);
+
+
+function toast(message){
+
+  const element =
+    document.getElementById("toast");
+
+  element.textContent =
+    message;
+
+  element.classList.add("show");
+
+  setTimeout(() => {
+
+    element.classList.remove("show");
+
+  },1800);
+
+}
+
+
+function analyze(){
+
+  left = 12;
+
+  document.getElementById("timer").textContent =
+    "12s";
+
+  document.getElementById("timer").className =
+    "";
+
+  document.getElementById("badge").textContent =
+    "FRESH";
+
+  document.getElementById("badge").className =
+    "badge";
+
+  clearInterval(interval);
+
+  interval = setInterval(() => {
+
+    if(left > 0){
+
+      left--;
+
+      document.getElementById("timer").textContent =
+        left + "s";
+
+    }
+
+    else{
+
+      document.getElementById("timer").textContent =
+        "EXPIRED";
+
+      document.getElementById("timer").className =
+        "expired";
+
+      document.getElementById("badge").textContent =
+        "EXPIRED";
+
+      document.getElementById("badge").className =
+        "badge expired";
+
+      clearInterval(interval);
+
+    }
+
+  },1000);
+
+  toast("Test analysis completed");
+
+}
+
+
+function notifyMe(){
+
+  toast(
+    "Telegram alerts will activate after bot connection"
+  );
+
+}
+
+
+function risk(){
+
+  toast(
+    "Risk calculator module is next"
+  );
+
+}
+
+
+function history(){
+
+  toast(
+    "History will populate from real test signals"
+  );
+
+}
+
+
+function premium(){
+
+  toast(
+    "Premium waitlist coming next"
+  );
+
+}
+
+</script>
+
+</body>
+</html>
