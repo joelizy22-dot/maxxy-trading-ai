@@ -1,564 +1,762 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ʍǟӼӼʏ Trading AI</title>
-<style>
-:root{
-  color-scheme:dark;
-  --bg:#070b12;
-  --card:#0d1420;
-  --card2:#111b29;
-  --line:#1d2a3b;
-  --text:#eef4ff;
-  --muted:#7f91aa;
-  --green:#22d39b;
-  --red:#ff5d73;
-  --blue:#5d8cff;
-  --gold:#f4c95d;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  background:var(--bg);
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,Arial,sans-serif;
-  color:var(--text);
-}
-button{
-  font:inherit;
-  color:inherit;
-  border:0;
-  cursor:pointer;
-}
-.app{
-  max-width:480px;
-  margin:auto;
-  min-height:100vh;
-  padding:18px 16px 88px;
-  background:linear-gradient(180deg,#09101a 0,#070b12 55%);
-}
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-.brand{
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-.logo{
-  width:42px;
-  height:42px;
-  border-radius:14px;
-  background:linear-gradient(135deg,#5d8cff,#22d39b);
-  display:grid;
-  place-items:center;
-  font-weight:900;
-  color:#061018;
-}
-.brand b{font-size:17px}
-.brand small{
-  display:block;
-  color:var(--muted);
-  margin-top:2px;
-}
-.pill{
-  padding:7px 10px;
-  border:1px solid var(--line);
-  background:#0d1521;
-  border-radius:999px;
-  font-size:11px;
-  color:#a9bad1;
-}
-.pair{
-  display:flex;
-  justify-content:space-between;
-  align-items:end;
-  margin-bottom:12px;
-}
-.pair h1{
-  font-size:25px;
-  margin:0;
-}
-.pair span{
-  color:var(--green);
-  font-size:13px;
-}
-.price{
-  margin-top:4px;
-  font-size:14px;
-  font-weight:800;
-}
-.chart{
-  height:205px;
-  border:1px solid var(--line);
-  border-radius:18px;
-  background:radial-gradient(circle at 70% 20%,#13223a,#0a1019 62%);
-  position:relative;
-  overflow:hidden;
-  margin-bottom:14px;
-}
-.grid{
-  position:absolute;
-  inset:0;
-  background-image:
-    linear-gradient(#ffffff08 1px,transparent 1px),
-    linear-gradient(90deg,#ffffff08 1px,transparent 1px);
-  background-size:25% 25%;
-}
-.level{
-  position:absolute;
-  left:0;
-  right:0;
-  height:1px;
-  border-top:1px dashed;
-  opacity:.8;
-}
-.support{
-  bottom:27%;
-  border-color:var(--green);
-}
-.resistance{
-  top:25%;
-  border-color:var(--red);
-}
-.level span{
-  position:absolute;
-  right:7px;
-  top:-14px;
-  font-size:9px;
-}
-.support span{color:var(--green)}
-.resistance span{color:var(--red)}
-.ema{
-  position:absolute;
-  left:0;
-  right:0;
-  top:52%;
-  height:2px;
-  background:var(--gold);
-  box-shadow:0 0 10px #f4c95d55;
-}
-.ema label{
-  position:absolute;
-  right:8px;
-  top:-18px;
-  color:var(--gold);
-  font-size:10px;
-}
-.candles{
-  position:absolute;
-  inset:18px;
-  display:flex;
-  align-items:stretch;
-  gap:7px;
-}
-.c{
-  flex:1;
-  position:relative;
-}
-.wick{
-  position:absolute;
-  left:50%;
-  width:1px;
-  top:10%;
-  bottom:10%;
-  background:#aebbd0;
-}
-.body{
-  position:absolute;
-  left:25%;
-  right:25%;
-  top:35%;
-  height:30%;
-  border-radius:2px;
-  background:var(--green);
-}
-.red.body{background:var(--red)}
-.up.body{
-  top:24%;
-  height:38%;
-}
-.down.body{
-  top:42%;
-  height:31%;
-}
-.signal{
-  border:1px solid #24415b;
-  background:linear-gradient(145deg,#0e1b29,#0b131e);
-  border-radius:20px;
-  padding:17px;
-  margin-bottom:14px;
-}
-.sighead{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.badge{
-  background:#0e3028;
-  color:var(--green);
-  padding:7px 10px;
-  border-radius:10px;
-  font-weight:800;
-  font-size:12px;
-}
-.badge.wait{
-  background:#302b12;
-  color:var(--gold);
-}
-.badge.put{
-  background:#351620;
-  color:var(--red);
-}
-.badge.error{
-  background:#351620;
-  color:var(--red);
-}
-.badge.fresh{
-  background:#102c3b;
-  color:#61c7ff;
-}
-.sig{
-  font-size:30px;
-  font-weight:900;
-  margin:9px 0 4px;
-}
-.sig.call{color:var(--green)}
-.sig.put{color:var(--red)}
-.sig.wait{color:var(--gold)}
-.sub{
-  color:var(--muted);
-  font-size:12px;
-}
-.row{
-  display:flex;
-  gap:8px;
-  margin-top:15px;
-}
-.metric{
-  flex:1;
-  background:#0a111b;
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:10px;
-}
-.metric small{
-  display:block;
-  color:var(--muted);
-  font-size:10px;
-}
-.metric b{
-  display:block;
-  margin-top:4px;
-  font-size:13px;
-}
-.actions{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:9px;
-}
-.action{
-  padding:13px;
-  border-radius:13px;
-  background:#121e2e;
-  border:1px solid var(--line);
-  font-weight:700;
-}
-.primary{
-  background:linear-gradient(135deg,#5d8cff,#4167d9);
-  border:0;
-}
-.section{
-  margin-top:18px;
-}
-.sectionhead{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:9px;
-}
-.sectionhead b{font-size:14px}
-.sectionhead span{
-  font-size:11px;
-  color:var(--muted);
-}
-.premium{
-  border:1px solid #54471e;
-  background:linear-gradient(135deg,#17170e,#0f151c);
-  border-radius:17px;
-  padding:15px;
-}
-.premium b{color:var(--gold)}
-.premium p{
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.5;
-  margin:7px 0 12px;
-}
-.premium button{
-  background:var(--gold);
-  color:#171207;
-  padding:10px 14px;
-  border-radius:11px;
-  font-weight:800;
-}
-.bottom{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  max-width:480px;
-  margin:auto;
-  background:#0a1019ee;
-  backdrop-filter:blur(16px);
-  border-top:1px solid var(--line);
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  padding:10px 8px calc(10px + env(safe-area-inset-bottom));
-}
-.nav{
-  background:transparent;
-  color:var(--muted);
-  font-size:10px;
-  padding:4px;
-}
-.nav.active{color:#fff}
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:78px;
-  transform:translateX(-50%);
-  background:#162438;
-  border:1px solid var(--line);
-  padding:10px 14px;
-  border-radius:12px;
-  font-size:12px;
-  display:none;
-  white-space:nowrap;
-  z-index:20;
-}
-.toast.show{display:block}
-.expired{
-  color:var(--red)!important;
-}
-.loading{
-  opacity:.65;
-}
-</style>
-</head>
-<body>
-<main class="app">
-<header class="top">
-  <div class="brand">
-    <div class="logo">AI</div>
-    <div><b>ʍǟӼӼʏ Trading AI</b><small>Strategy assistant</small></div>
-  </div>
-  <div class="pill">TEST MODE</div>
-</header>
-<div class="pair">
-  <div><h1>EUR/USD</h1><div class="sub">1-minute analysis • 3-minute expiry</div><div class="price" id="price">Loading price...</div></div>
-  <span id="feed">● CONNECTING</span>
-</div>
-<section class="chart">
-  <div class="grid"></div>
-  <div class="level resistance"><span>RESISTANCE</span></div>
-  <div class="level support"><span>SUPPORT</span></div>
-  <div class="ema"><label>EMA 50</label></div>
-  <div class="candles" id="candles"></div>
-</section>
-<section class="signal">
-  <div class="sighead"><div class="sub">LATEST ANALYSIS</div><div class="badge wait" id="badge">WAIT</div></div>
-  <div class="sig wait" id="sig">WAIT</div>
-  <div class="sub" id="reason">Waiting for live market analysis...</div>
-  <div class="row">
-    <div class="metric"><small>Entry status</small><b id="timer">--</b></div>
-    <div class="metric"><small>Expiry</small><b>3 min</b></div>
-    <div class="metric"><small>Risk</small><b>1%</b></div>
-  </div>
-</section>
-<div class="actions">
-  <button class="action primary" onclick="analyze()">Analyze now</button>
-  <button class="action" onclick="notifyMe()">🔔 Alert</button>
-  <button class="action" onclick="risk()">Risk calculator</button>
-  <button class="action" onclick="history()">Signal history</button>
-</div>
-<section class="section">
-  <div class="sectionhead"><b>Premium Signals</b><span>Coming next</span></div>
-  <div class="premium"><b>⚡ Premium access</b><p>Private signal feed, performance history and advanced filters will be added after the testing engine is validated.</p><button onclick="premium()">Join waitlist</button></div>
-</section>
-</main>
-<nav class="bottom">
-  <button class="nav active">⌂<br>Dashboard</button>
-  <button class="nav">◈<br>Markets</button>
-  <button class="nav">◉<br>Signals</button>
-  <button class="nav">◎<br>Profile</button>
-</nav>
-<div class="toast" id="toast"></div>
-<script>
-const API_URL = "https://maxxy-market-api.joelizy22.workers.dev/eurusd";
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "https://joelizy22-dot.github.io",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+const SIGNALS_KEY = "signals";
+const META_KEY = "meta";
+
 const EMA_LENGTH = 50;
 const SR_LOOKBACK = 20;
-let signalLocked = false;
-let lockedSignal = null;
-let signalTimer = null;
-let currentData = null;
-function toast(message){const element=document.getElementById("toast");element.textContent=message;element.classList.add("show");setTimeout(()=>{element.classList.remove("show");},1800);}
-function setSignal(type,reason){const sig=document.getElementById("sig");const badge=document.getElementById("badge");sig.className="sig "+type.toLowerCase();sig.textContent=type;badge.className="badge";if(type==="CALL"){badge.textContent="CALL";}else if(type==="PUT"){badge.textContent="PUT";badge.classList.add("put");}else{badge.textContent="WAIT";badge.classList.add("wait");}document.getElementById("reason").textContent=reason;}
-function setFeed(text){const feed=document.getElementById("feed");feed.textContent="● "+text;}
-function calculateEMA(candles,length){if(candles.length<length){return null;}const closes=candles.map(c=>Number(c.close));let ema=closes.slice(0,length).reduce((a,b)=>a+b,0)/length;const multiplier=2/(length+1);for(let i=length;i<closes.length;i++){ema=((closes[i]-ema)*multiplier)+ema;}return ema;}
-function calculateLevels(candles){const recent=candles.slice(-SR_LOOKBACK);const lows=recent.map(c=>Number(c.low));const highs=recent.map(c=>Number(c.high));return{support:Math.min(...lows),resistance:Math.max(...highs)};}
-function candleInfo(candle){const open=Number(candle.open);const high=Number(candle.high);const low=Number(candle.low);const close=Number(candle.close);const body=Math.abs(close-open);const upperWick=high-Math.max(open,close);const lowerWick=Math.min(open,close)-low;const range=high-low;return{open,high,low,close,body,upperWick,lowerWick,range,bullish:close>open,bearish:close<open};}
-function generateSignal(candles){if(candles.length<60){return{type:"WAIT",reason:"Not enough candles for EMA 50 analysis."};}const last=candleInfo(candles[candles.length-1]);const previous=candleInfo(candles[candles.length-2]);const ema=calculateEMA(candles,EMA_LENGTH);const levels=calculateLevels(candles);const range=levels.resistance-levels.support;if(!ema||range<=0){return{type:"WAIT",reason:"Market structure is not clear yet."};}const supportDistance=Math.abs(last.low-levels.support);const resistanceDistance=Math.abs(last.high-levels.resistance);const nearSupport=supportDistance<=range*0.15;const nearResistance=resistanceDistance<=range*0.15;const bullishRejection=last.bullish&&last.lowerWick>=Math.max(last.body*1.2,last.range*0.20);const bearishRejection=last.bearish&&last.upperWick>=Math.max(last.body*1.2,last.range*0.20);const bullishTrend=last.close>ema;const bearishTrend=last.close<ema;if(bullishTrend&&nearSupport&&bullishRejection){return{type:"CALL",reason:"Price is above EMA 50 with bullish rejection near support."};}if(bearishTrend&&nearResistance&&bearishRejection){return{type:"PUT",reason:"Price is below EMA 50 with bearish rejection near resistance."};}const bullishBreak=bullishTrend&&last.close>previous.high&&last.bullish;const bearishBreak=bearishTrend&&last.close<previous.low&&last.bearish;if(bullishBreak){return{type:"CALL",reason:"Bullish breakout confirmed above the previous candle."};}if(bearishBreak){return{type:"PUT",reason:"Bearish breakout confirmed below the previous candle."};}return{type:"WAIT",reason:"No complete EMA + level + candle confirmation yet."};}
-function drawCandles(candles){const container=document.getElementById("candles");const recent=candles.slice(-8);container.innerHTML="";recent.forEach(candle=>{const info=candleInfo(candle);const div=document.createElement("div");div.className="c "+(info.bearish?"red":"up");const wick=document.createElement("i");wick.className="wick";const body=document.createElement("i");body.className="body";div.appendChild(wick);div.appendChild(body);container.appendChild(div);});}
+const MAX_HISTORY = 100;
 
-function lockSignal(type,reason){
+export default {
+  async fetch(request, env) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        headers: CORS_HEADERS,
+      });
+    }
 
-  signalLocked = true;
+    try {
+      const url = new URL(request.url);
 
-  lockedSignal = type;
+      // ---------------------------------------
+      // HEALTH CHECK
+      // ---------------------------------------
+      if (url.pathname === "/") {
+        return jsonResponse({
+          ok: true,
+          message: "ʍǟӼӼʏ Market API is online",
+        });
+      }
 
-  clearInterval(signalTimer);
+      // ---------------------------------------
+      // LIVE EUR/USD DATA
+      // ---------------------------------------
+      if (url.pathname === "/eurusd") {
+        const data = await fetchMarketData(env);
 
-  setSignal(
-    type,
-    reason
+        return jsonResponse(data, data._status || 200);
+      }
+
+      // ---------------------------------------
+      // SIGNAL HISTORY
+      // ---------------------------------------
+      if (url.pathname === "/signals") {
+        const signals = await getSignals(env);
+
+        return jsonResponse({
+          ok: true,
+          signals,
+        });
+      }
+
+      // ---------------------------------------
+      // STATS
+      // ---------------------------------------
+      if (url.pathname === "/stats") {
+        const signals = await getSignals(env);
+
+        const completed = signals.filter(
+          (s) =>
+            s.outcome === "WIN" ||
+            s.outcome === "LOSS" ||
+            s.outcome === "PUSH"
+        );
+
+        const wins = completed.filter(
+          (s) => s.outcome === "WIN"
+        ).length;
+
+        const losses = completed.filter(
+          (s) => s.outcome === "LOSS"
+        ).length;
+
+        const pushes = completed.filter(
+          (s) => s.outcome === "PUSH"
+        ).length;
+
+        const pending = signals.filter(
+          (s) => s.outcome === "PENDING"
+        ).length;
+
+        const decided = wins + losses;
+
+        const winRate =
+          decided > 0
+            ? Number(((wins / decided) * 100).toFixed(2))
+            : 0;
+
+        return jsonResponse({
+          ok: true,
+          totalSignals: signals.length,
+          completed: completed.length,
+          wins,
+          losses,
+          pushes,
+          pending,
+          winRate,
+        });
+      }
+
+      return jsonResponse({
+        ok: false,
+        error: "Endpoint not found",
+      }, 404);
+
+    } catch (error) {
+      return jsonResponse({
+        ok: false,
+        error: "Server error",
+      }, 500);
+    }
+  },
+
+  // ---------------------------------------
+  // CRON — RUNS EVERY MINUTE
+  // ---------------------------------------
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(runSignalEngine(env));
+  },
+};
+
+
+// =====================================================
+// MARKET DATA
+// =====================================================
+
+async function fetchMarketData(env) {
+  if (!env.TWELVE_DATA_API_KEY) {
+    return {
+      error: "API key is not configured",
+      _status: 500,
+    };
+  }
+
+  const apiUrl = new URL(
+    "https://api.twelvedata.com/time_series"
   );
 
-  const timer =
-    document.getElementById("timer");
+  apiUrl.searchParams.set("symbol", "EUR/USD");
+  apiUrl.searchParams.set("interval", "1min");
+  apiUrl.searchParams.set("outputsize", "100");
+  apiUrl.searchParams.set("timezone", "UTC");
+  apiUrl.searchParams.set(
+    "apikey",
+    env.TWELVE_DATA_API_KEY
+  );
 
-  const badge =
-    document.getElementById("badge");
+  const response = await fetch(apiUrl.toString());
+  const data = await response.json();
 
-  const entryEndsAt =
-    Date.now() + 12000;
+  if (!response.ok || data.status === "error") {
+    return {
+      ...data,
+      _status: response.status || 500,
+    };
+  }
 
-  window.maxxyEntryEndsAt =
-    entryEndsAt;
+  return data;
+}
 
-  timer.className = "";
 
-  badge.textContent = type;
+// =====================================================
+// SIGNAL ENGINE
+// =====================================================
 
-  badge.className =
-    "badge " +
-    (
-      type === "PUT"
-     ? "put"
-      : ""
-    );
+async function runSignalEngine(env) {
+  try {
+    const data = await fetchMarketData(env);
 
-  function updateCountdown(){
+    if (!data || !data.values || data.values.length < 60) {
+      return;
+    }
 
-    const remaining =
-      Math.max(
-        0,
-        window.maxxyEntryEndsAt -
-        Date.now()
+    const candles = normalizeCandles(data.values);
+
+    // Remove the newest candle because it may still be forming.
+    const closedCandles = candles.slice(0, -1);
+
+    if (closedCandles.length < 60) {
+      return;
+    }
+
+    let signals = await getSignals(env);
+
+    // ---------------------------------------
+    // 1. RESOLVE OLD PENDING SIGNALS
+    // ---------------------------------------
+
+    let changed = false;
+
+    for (const signal of signals) {
+      if (signal.outcome !== "PENDING") {
+        continue;
+      }
+
+      const expiryCandle = closedCandles.find(
+  (candle) =>
+    Date.parse(candle.time) ===
+    Date.parse(signal.expiryCandleTime)
+);
+
+      if (!expiryCandle) {
+        continue;
+      }
+
+      signal.expiryPrice = expiryCandle.close;
+      signal.outcome = calculateOutcome(
+        signal.direction,
+        signal.entryPrice,
+        signal.expiryPrice
       );
 
-    const seconds =
-      Math.ceil(
-        remaining / 1000
+      signal.resolvedAt = new Date().toISOString();
+
+      changed = true;
+    }
+
+    // ---------------------------------------
+    // 2. ANALYZE NEW CLOSED CANDLE
+    // ---------------------------------------
+
+    const lastCandle =
+      closedCandles[closedCandles.length - 1];
+
+    const meta =
+      JSON.parse(
+        (await env.SIGNAL_KV.get(META_KEY)) || "{}"
       );
 
-    if(remaining > 0){
-
-      timer.textContent =
-        seconds + "s";
+    // Don't process the same candle twice.
+    if (
+      meta.lastProcessedCandle === lastCandle.time
+    ) {
+      if (changed) {
+        await saveSignals(env, signals);
+      }
 
       return;
     }
 
-    clearInterval(signalTimer);
+    const result = generateSignal(closedCandles);
 
-    signalLocked = false;
-
-    lockedSignal = null;
-
-    timer.textContent =
-      "EXPIRED";
-
-    timer.className =
-      "expired";
-
-    const current =
-      document.getElementById("sig")
-       .textContent;
-
-    if(
-      current === "CALL" ||
-      current === "PUT"
-    ){
-
-      document.getElementById("badge")
-       .textContent =
-        "EXPIRED";
-
-      document.getElementById("badge")
-       .className =
-        "badge error";
-    }
-  }
-
-  updateCountdown();
-
-  signalTimer =
-    setInterval(
-      updateCountdown,
-      250
-    );
-}
-
-document.addEventListener(
-  "visibilitychange",
-  () => {
-
-    if(
-      document.visibilityState ===
-      "visible" &&
-      window.maxxyEntryEndsAt
-    ){
-
-      const timer =
-        document.getElementById("timer");
-
-      const remaining =
-        Math.max(
-          0,
-          window.maxxyEntryEndsAt -
-          Date.now()
+    if (
+      result.signal === "CALL" ||
+      result.signal === "PUT"
+    ) {
+      const expiryCandleTime =
+        addMinutesToTimestamp(
+          lastCandle.time,
+          3
         );
 
-      if(remaining > 0){
+      const newSignal = {
+        id:
+          `${lastCandle.time}-${result.signal}`,
 
-        timer.textContent =
-          Math.ceil(
-            remaining / 1000
-          ) + "s";
+        symbol: "EUR/USD",
 
-      }
+        timeframe: "1m",
 
-      else{
+        tradeDuration: "3m",
 
-        timer.textContent =
-          "EXPIRED";
+        direction: result.signal,
 
+        reason: result.reason,
+
+        entryPrice: lastCandle.close,
+
+        candleTime: lastCandle.time,
+
+        signalCreatedAt:
+          new Date().toISOString(),
+
+        expiryCandleTime,
+
+        expiryPrice: null,
+
+        outcome: "PENDING",
+
+        userTrade: "NOT_RECORDED",
+      };
+
+      // Avoid duplicate IDs.
+      const duplicate = signals.some(
+        (s) => s.id === newSignal.id
+      );
+
+      if (!duplicate) {
+        signals.push(newSignal);
+        changed = true;
       }
     }
-  }
-);
 
-async function analyze(){if(signalLocked){return;}setSignal("WAIT","Fetching the latest EUR/USD 1-minute candles...");document.getElementById("timer").textContent="LOADING";setFeed("UPDATING");try{const response=await fetch(API_URL+"?t="+Date.now(),{method:"GET",cache:"no-store"});if(!response.ok){throw new Error("Market API returned an error.");}const data=await response.json();if(!data||!Array.isArray(data.values)||data.values.length<60){throw new Error("Insufficient market data.");}const allCandles=data.values.slice().reverse();const closedCandles=allCandles.slice(0,-1);const currentCandle=allCandles[allCandles.length-1];currentData={allCandles,closedCandles,currentCandle};const latest=closedCandles[closedCandles.length-1];const latestInfo=candleInfo(latest);const ema=calculateEMA(closedCandles,EMA_LENGTH);const levels=calculateLevels(closedCandles);const result=generateSignal(closedCandles);document.getElementById("price").textContent="Price: "+latestInfo.close.toFixed(5);setFeed("LIVE DATA");drawCandles(closedCandles);if(ema){const recent=closedCandles.slice(-20);const min=Math.min(...recent.map(c=>Number(c.low)));const max=Math.max(...recent.map(c=>Number(c.high)));if(max>min){const position=100-((ema-min)/(max-min)*100);document.querySelector(".ema").style.top=Math.max(5,Math.min(95,position))+"%";}}if(levels){document.querySelector(".support").style.bottom="27%";document.querySelector(".resistance").style.top="25%";}if(result.type==="CALL"||result.type==="PUT"){lockSignal(result.type,result.reason);}else{setSignal("WAIT",result.reason);document.getElementById("timer").textContent="WAIT";}toast("Live EUR/USD analysis completed");}catch(error){console.error(error);setFeed("ERROR");setSignal("WAIT","Unable to retrieve live market data. Check the connection and try again.");document.getElementById("timer").textContent="--";toast("Market data connection error");}}
-function notifyMe(){toast("Alerts will activate after Telegram alert integration.");}
-function risk(){toast("Risk calculator module is coming next.");}
-function history(){toast("Signal history will populate from tested signals.");}
-function premium(){toast("Premium waitlist coming next.");}
-analyze();
-setInterval(()=>{analyze();},30000);
-</script>
-</body>
-</html>
+    meta.lastProcessedCandle =
+      lastCandle.time;
+
+    meta.updatedAt =
+      new Date().toISOString();
+
+    // Keep the most recent signals only.
+    if (signals.length > MAX_HISTORY) {
+      signals = signals.slice(-MAX_HISTORY);
+    }
+
+    await env.SIGNAL_KV.put(
+      META_KEY,
+      JSON.stringify(meta)
+    );
+
+    if (changed) {
+      await saveSignals(env, signals);
+    }
+
+  } catch (error) {
+    console.log(
+      "Signal engine error:",
+      error
+    );
+  }
+}
+
+
+// =====================================================
+// GENERATE SIGNAL
+// =====================================================
+
+function generateSignal(candles) {
+  if (candles.length < 60) {
+    return {
+      signal: "WAIT",
+      reason: "Not enough market data.",
+    };
+  }
+
+  const last =
+    candles[candles.length - 1];
+
+  const previous =
+    candles[candles.length - 2];
+
+  const ema50 =
+    calculateEMA(
+      candles.map((c) => c.close),
+      EMA_LENGTH
+    );
+
+  const support =
+    calculateSupport(candles);
+
+  const resistance =
+    calculateResistance(candles);
+
+  const range =
+    resistance - support;
+
+  if (range <= 0) {
+    return {
+      signal: "WAIT",
+      reason: "Market range is too small.",
+    };
+  }
+
+  const nearSupport =
+    Math.abs(last.low - support)
+      <= range * 0.15;
+
+  const nearResistance =
+    Math.abs(last.high - resistance)
+      <= range * 0.15;
+
+  const info =
+    candleInfo(last);
+
+  const bullishTrend =
+    last.close > ema50;
+
+  const bearishTrend =
+    last.close < ema50;
+
+  // ---------------------------------------
+  // BULLISH REJECTION
+  // ---------------------------------------
+
+  const bullishRejection =
+    info.bullish &&
+    info.lowerWick >=
+      Math.max(
+        info.body * 1.2,
+        info.range * 0.20
+      );
+
+  // ---------------------------------------
+  // BEARISH REJECTION
+  // ---------------------------------------
+
+  const bearishRejection =
+    info.bearish &&
+    info.upperWick >=
+      Math.max(
+        info.body * 1.2,
+        info.range * 0.20
+      );
+
+  // ---------------------------------------
+  // CALL
+  // ---------------------------------------
+
+  if (
+    bullishTrend &&
+    nearSupport &&
+    bullishRejection
+  ) {
+    return {
+      signal: "CALL",
+      reason:
+        "Bullish rejection at support with EMA50 confirmation.",
+    };
+  }
+
+  // ---------------------------------------
+  // PUT
+  // ---------------------------------------
+
+  if (
+    bearishTrend &&
+    nearResistance &&
+    bearishRejection
+  ) {
+    return {
+      signal: "PUT",
+      reason:
+        "Bearish rejection at resistance with EMA50 confirmation.",
+    };
+  }
+
+  // ---------------------------------------
+  // BULLISH BREAKOUT
+  // ---------------------------------------
+
+  if (
+    bullishTrend &&
+    last.close > previous.high &&
+    info.bullish
+  ) {
+    return {
+      signal: "CALL",
+      reason:
+        "Bullish breakout confirmed above the previous candle.",
+    };
+  }
+
+  // ---------------------------------------
+  // BEARISH BREAKOUT
+  // ---------------------------------------
+
+  if (
+    bearishTrend &&
+    last.close < previous.low &&
+    info.bearish
+  ) {
+    return {
+      signal: "PUT",
+      reason:
+        "Bearish breakout confirmed below the previous candle.",
+    };
+  }
+
+  return {
+    signal: "WAIT",
+    reason:
+      "No complete EMA + level + candle confirmation yet.",
+  };
+}
+
+
+// =====================================================
+// EMA
+// =====================================================
+
+function calculateEMA(values, length) {
+  if (values.length < length) {
+    return values[values.length - 1];
+  }
+
+  const multiplier =
+    2 / (length + 1);
+
+  let ema = values
+    .slice(0, length)
+    .reduce(
+      (sum, value) => sum + value,
+      0
+    ) / length;
+
+  for (
+    let i = length;
+    i < values.length;
+    i++
+  ) {
+    ema =
+      (values[i] - ema) *
+        multiplier +
+      ema;
+  }
+
+  return ema;
+}
+
+
+// =====================================================
+// SUPPORT / RESISTANCE
+// =====================================================
+
+function calculateSupport(candles) {
+  const recent =
+    candles.slice(-SR_LOOKBACK);
+
+  return Math.min(
+    ...recent.map((c) => c.low)
+  );
+}
+
+function calculateResistance(candles) {
+  const recent =
+    candles.slice(-SR_LOOKBACK);
+
+  return Math.max(
+    ...recent.map((c) => c.high)
+  );
+}
+
+
+// =====================================================
+// CANDLE INFORMATION
+// =====================================================
+
+function candleInfo(candle) {
+  const body =
+    Math.abs(
+      candle.close - candle.open
+    );
+
+  const range =
+    candle.high - candle.low;
+
+  const upperWick =
+    candle.high -
+    Math.max(
+      candle.open,
+      candle.close
+    );
+
+  const lowerWick =
+    Math.min(
+      candle.open,
+      candle.close
+    ) -
+    candle.low;
+
+  return {
+    body,
+    range,
+    upperWick,
+    lowerWick,
+
+    bullish:
+      candle.close > candle.open,
+
+    bearish:
+      candle.close < candle.open,
+  };
+}
+
+
+// =====================================================
+// NORMALIZE TWELVE DATA
+// =====================================================
+
+function normalizeCandles(values) {
+  const candles =
+    values
+      .map((v) => ({
+        time: normalizeTimestamp(v.datetime),
+
+        open: Number(v.open),
+
+        high: Number(v.high),
+
+        low: Number(v.low),
+
+        close: Number(v.close),
+      }))
+      .filter(
+        (c) =>
+          c.time &&
+          Number.isFinite(c.open) &&
+          Number.isFinite(c.high) &&
+          Number.isFinite(c.low) &&
+          Number.isFinite(c.close)
+      );
+
+  candles.sort(
+    (a, b) =>
+      Date.parse(a.time) -
+      Date.parse(b.time)
+  );
+
+  return candles;
+}
+
+
+// =====================================================
+// TIMESTAMP HELPERS
+// =====================================================
+
+function normalizeTimestamp(value) {
+  if (!value) {
+    return null;
+  }
+
+  // Twelve Data UTC timestamps normally arrive
+  // without a timezone suffix.
+  if (
+    !value.endsWith("Z") &&
+    !value.includes("+") &&
+    !value.includes("-", 10)
+  ) {
+    return value.replace(
+      " ",
+      "T"
+    ) + "Z";
+  }
+
+  return value.replace(
+    " ",
+    "T"
+  );
+}
+
+function addMinutesToTimestamp(
+  timestamp,
+  minutes
+) {
+  const time =
+    Date.parse(timestamp);
+
+  if (!Number.isFinite(time)) {
+    return timestamp;
+  }
+
+  return new Date(
+    time +
+      minutes * 60 * 1000
+  ).toISOString();
+}
+
+
+// =====================================================
+// OUTCOME
+// =====================================================
+
+function calculateOutcome(
+  direction,
+  entryPrice,
+  expiryPrice
+) {
+  if (
+    !Number.isFinite(entryPrice) ||
+    !Number.isFinite(expiryPrice)
+  ) {
+    return "PENDING";
+  }
+
+  if (expiryPrice === entryPrice) {
+    return "PUSH";
+  }
+
+  if (
+    direction === "CALL" &&
+    expiryPrice > entryPrice
+  ) {
+    return "WIN";
+  }
+
+  if (
+    direction === "PUT" &&
+    expiryPrice < entryPrice
+  ) {
+    return "WIN";
+  }
+
+  return "LOSS";
+}
+
+
+// =====================================================
+// KV STORAGE
+// =====================================================
+
+async function getSignals(env) {
+  try {
+    const data =
+      await env.SIGNAL_KV.get(
+        SIGNALS_KEY
+      );
+
+    if (!data) {
+      return [];
+    }
+
+    const parsed =
+      JSON.parse(data);
+
+    return Array.isArray(parsed)
+      ? parsed
+      : [];
+
+  } catch (error) {
+    return [];
+  }
+}
+
+async function saveSignals(
+  env,
+  signals
+) {
+  await env.SIGNAL_KV.put(
+    SIGNALS_KEY,
+    JSON.stringify(signals)
+  );
+}
+
+
+// =====================================================
+// JSON RESPONSE
+// =====================================================
+
+function jsonResponse(
+  data,
+  status = 200
+) {
+  const body = {
+    ...data,
+  };
+
+  delete body._status;
+
+  return new Response(
+    JSON.stringify(body),
+    {
+      status,
+      headers: {
+        "Content-Type":
+          "application/json",
+        ...CORS_HEADERS,
+      },
+    }
+  );
+}
