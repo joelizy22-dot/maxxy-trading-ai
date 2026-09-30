@@ -729,20 +729,6 @@ let signalTimer = null;
 
 let currentData = null;
 
-/*
-  NEW:
-
-  Exact real-world time at which the
-  12-second entry window ends.
-
-  This fixes the countdown when the
-  Telegram Mini App is sent to the
-  background.
-*/
-
-let maxxyEntryEndsAt = null;
-
-
 /* =========================================
    BASIC HELPERS
    ========================================= */
@@ -1215,122 +1201,6 @@ function drawCandles(candles){
 }
 
 /* =========================================
-   FINISH / EXPIRE SIGNAL
-   ========================================= */
-
-function expireSignal(){
-
-  clearInterval(
-    signalTimer
-  );
-
-  signalTimer =
-    null;
-
-  signalLocked =
-    false;
-
-  lockedSignal =
-    null;
-
-  maxxyEntryEndsAt =
-    null;
-
-  const timer =
-    document.getElementById("timer");
-
-  timer.textContent =
-    "EXPIRED";
-
-  timer.className =
-    "expired";
-
-  const current =
-    document.getElementById("sig")
-      .textContent;
-
-  if(
-    current === "CALL" ||
-    current === "PUT"
-  ){
-
-    document.getElementById("badge")
-      .textContent =
-      "EXPIRED";
-
-    document.getElementById("badge")
-      .className =
-      "badge error";
-
-  }
-}
-
-/* =========================================
-   UPDATE REAL-TIME COUNTDOWN
-   ========================================= */
-
-function updateSignalCountdown(){
-
-  /*
-    No active signal.
-  */
-
-  if(
-    maxxyEntryEndsAt === null
-  ){
-
-    return;
-
-  }
-
-  /*
-    Calculate using the actual clock.
-
-    This is the important part.
-
-    Even if iOS pauses setInterval while
-    Telegram is in the background,
-    Date.now() still tells us how much
-    real time has passed.
-  */
-
-  const remaining =
-    Math.max(
-      0,
-      maxxyEntryEndsAt -
-      Date.now()
-    );
-
-  /*
-    Entry window finished.
-  */
-
-  if(
-    remaining <= 0
-  ){
-
-    expireSignal();
-
-    return;
-
-  }
-
-  /*
-    Round UP so 11.2 seconds displays
-    as 12s instead of 11s.
-  */
-
-  const seconds =
-    Math.ceil(
-      remaining / 1000
-    );
-
-  document.getElementById("timer")
-    .textContent =
-    seconds + "s";
-}
-
-/* =========================================
    LOCK CALL / PUT
    ========================================= */
 
@@ -1340,9 +1210,8 @@ function updateSignalCountdown(){
 
   It does NOT use the candle timestamp.
 
-  The end time is stored as an absolute
-  timestamp so the countdown stays correct
-  when Telegram is backgrounded.
+  That prevents a newly detected CALL
+  from immediately becoming EXPIRED.
 */
 
 function lockSignal(type,reason){
@@ -1353,9 +1222,7 @@ function lockSignal(type,reason){
   lockedSignal =
     type;
 
-  clearInterval(
-    signalTimer
-  );
+  clearInterval(signalTimer);
 
   setSignal(
     type,
@@ -1369,15 +1236,17 @@ function lockSignal(type,reason){
     document.getElementById("badge");
 
   /*
-    Set the exact moment the
-    12-second entry window ends.
+    Fresh entry window.
   */
 
-  maxxyEntryEndsAt =
-    Date.now() + 12000;
+  let seconds =
+    12;
 
   timer.className =
     "";
+
+  timer.textContent =
+    seconds + "s";
 
   badge.textContent =
     type;
@@ -1391,59 +1260,63 @@ function lockSignal(type,reason){
     );
 
   /*
-    Update immediately.
-  */
-
-  updateSignalCountdown();
-
-  /*
-    Keep updating while the app
-    is active.
+    Countdown.
   */
 
   signalTimer =
-    setInterval(
-      updateSignalCountdown,
-      250
-    );
+    setInterval(() => {
+
+      seconds--;
+
+      if(seconds > 0){
+
+        timer.textContent =
+          seconds + "s";
+
+        return;
+      }
+
+      /*
+        Entry window finished.
+      */
+
+      clearInterval(
+        signalTimer
+      );
+
+      signalLocked =
+        false;
+
+      lockedSignal =
+        null;
+
+      timer.textContent =
+        "EXPIRED";
+
+      timer.className =
+        "expired";
+
+      const current =
+        document.getElementById("sig")
+          .textContent;
+
+      if(
+        current === "CALL" ||
+        current === "PUT"
+      ){
+
+        document.getElementById("badge")
+          .textContent =
+          "EXPIRED";
+
+        document.getElementById("badge")
+          .className =
+          "badge error";
+
+      }
+
+    },1000);
 }
-
-/* =========================================
-   IMPORTANT MOBILE / TELEGRAM FIX
-   ========================================= */
-
-/*
-  When the Mini App becomes visible again,
-  immediately recalculate the countdown.
-
-  Example:
-
-  Signal appears at 12s.
-  User leaves Telegram for 7 seconds.
-  User returns.
-
-  The app will calculate:
-
-  12 - 7 = about 5s
-
-  instead of showing the old frozen 12s.
-*/
-
-document.addEventListener(
-  "visibilitychange",
-  () => {
-
-    if(
-      document.visibilityState ===
-      "visible"
-    ){
-
-      updateSignalCountdown();
-
-    }
-
-  }
-);
 
 /* =========================================
    LIVE MARKET ANALYSIS
