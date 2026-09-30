@@ -1,862 +1,591 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
 <title>ʍǟӼӼʏ Trading AI</title>
 
 <style>
-:root{
-  color-scheme:dark;
-  --bg:#070b12;
-  --card:#0d1420;
-  --card2:#111b29;
-  --line:#1d2a3b;
-  --text:#eef4ff;
-  --muted:#7f91aa;
-  --green:#22d39b;
-  --red:#ff5d73;
-  --blue:#5d8cff;
-  --gold:#f4c95d;
-}
 
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
+
   margin:0;
-  background:var(--bg);
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,Arial,sans-serif;
-  color:var(--text);
+
+  background:#050505;
+
+  color:#ffffff;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
 }
 
-button{
-  font:inherit;
-  color:inherit;
-  border:0;
-  cursor:pointer;
-}
+.container{
 
-.app{
-  max-width:480px;
+  max-width:700px;
+
   margin:auto;
-  min-height:100vh;
-  padding:18px 16px 88px;
-  background:linear-gradient(180deg,#09101a 0,#070b12 55%);
+
+  padding:20px;
+
 }
 
-.top{
+.header{
+
   display:flex;
+
   justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
 
-.brand{
-  display:flex;
-  gap:10px;
   align-items:center;
+
+  margin-bottom:20px;
+
 }
 
 .logo{
-  width:42px;
-  height:42px;
-  border-radius:14px;
-  background:linear-gradient(135deg,#5d8cff,#22d39b);
-  display:grid;
-  place-items:center;
-  font-weight:900;
-  color:#061018;
-}
 
-.brand b{font-size:17px}
+  font-size:24px;
 
-.brand small{
-  display:block;
-  color:var(--muted);
-  margin-top:2px;
-}
-
-.pill{
-  padding:7px 10px;
-  border:1px solid var(--line);
-  background:#0d1521;
-  border-radius:999px;
-  font-size:11px;
-  color:#a9bad1;
-}
-
-.pair{
-  display:flex;
-  justify-content:space-between;
-  align-items:end;
-  margin-bottom:12px;
-}
-
-.pair h1{
-  font-size:25px;
-  margin:0;
-}
-
-.pair span{
-  color:var(--green);
-  font-size:13px;
-}
-
-.price{
-  margin-top:4px;
-  font-size:14px;
   font-weight:800;
+
+}
+
+.status{
+
+  font-size:12px;
+
+  color:#00ff88;
+
+}
+
+.card{
+
+  background:#111111;
+
+  border:1px solid #242424;
+
+  border-radius:18px;
+
+  padding:18px;
+
+  margin-bottom:14px;
+
 }
 
 .chart{
-  height:205px;
-  border:1px solid var(--line);
-  border-radius:18px;
-  background:radial-gradient(circle at 70% 20%,#13223a,#0a1019 62%);
+
+  height:280px;
+
   position:relative;
+
   overflow:hidden;
-  margin-bottom:14px;
+
+  border-radius:14px;
+
+  background:
+    linear-gradient(
+      rgba(255,255,255,.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.035) 1px,
+      transparent 1px
+    );
+
+  background-size:
+    35px 35px;
+
 }
 
-.grid{
-  position:absolute;
-  inset:0;
-  background-image:
-    linear-gradient(#ffffff08 1px,transparent 1px),
-    linear-gradient(90deg,#ffffff08 1px,transparent 1px);
-  background-size:25% 25%;
-}
+.chart-line{
 
-.level{
   position:absolute;
+
   left:0;
+
   right:0;
+
   height:1px;
-  border-top:1px dashed;
-  opacity:.8;
+
+  background:#444;
+
 }
 
 .support{
-  bottom:27%;
-  border-color:var(--green);
+
+  top:72%;
+
+  background:#00ff88;
+
 }
 
 .resistance{
-  top:25%;
-  border-color:var(--red);
-}
 
-.level span{
-  position:absolute;
-  right:7px;
-  top:-14px;
-  font-size:9px;
-}
+  top:28%;
 
-.support span{color:var(--green)}
-.resistance span{color:var(--red)}
+  background:#ff4d4d;
+
+}
 
 .ema{
+
   position:absolute;
-  left:0;
-  right:0;
-  top:52%;
+
+  width:100%;
+
   height:2px;
-  background:var(--gold);
-  box-shadow:0 0 10px #f4c95d55;
-}
 
-.ema label{
-  position:absolute;
-  right:8px;
-  top:-18px;
-  color:var(--gold);
-  font-size:10px;
-}
+  background:#f4c542;
 
-.candles{
-  position:absolute;
-  inset:18px;
-  display:flex;
-  align-items:stretch;
-  gap:7px;
-}
+  top:50%;
 
-.c{
-  flex:1;
-  position:relative;
-}
+  transform:
+    rotate(-4deg);
 
-.wick{
-  position:absolute;
-  left:50%;
-  width:1px;
-  top:10%;
-  bottom:10%;
-  background:#aebbd0;
-}
-
-.body{
-  position:absolute;
-  left:25%;
-  right:25%;
-  top:35%;
-  height:30%;
-  border-radius:2px;
-  background:var(--green);
-}
-
-.red .body{background:var(--red)}
-
-.up .body{
-  top:24%;
-  height:38%;
-}
-
-.down .body{
-  top:42%;
-  height:31%;
 }
 
 .signal{
-  border:1px solid #24415b;
-  background:linear-gradient(145deg,#0e1b29,#0b131e);
-  border-radius:20px;
-  padding:17px;
-  margin-bottom:14px;
+
+  text-align:center;
+
 }
 
-.sighead{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+.signal-label{
+
+  font-size:13px;
+
+  color:#888;
+
+  margin-bottom:8px;
+
+}
+
+.signal-main{
+
+  font-size:42px;
+
+  font-weight:900;
+
+}
+
+.call{
+
+  color:#00ff88;
+
+}
+
+.put{
+
+  color:#ff4d4d;
+
+}
+
+.wait{
+
+  color:#aaa;
+
+}
+
+.timer{
+
+  font-size:28px;
+
+  font-weight:800;
+
+  margin-top:8px;
+
+}
+
+.expired{
+
+  color:#777;
+
 }
 
 .badge{
-  background:#0e3028;
-  color:var(--green);
-  padding:7px 10px;
-  border-radius:10px;
-  font-weight:800;
-  font-size:12px;
-}
 
-.badge.wait{
-  background:#302b12;
-  color:var(--gold);
+  display:inline-block;
+
+  padding:7px 14px;
+
+  border-radius:20px;
+
+  background:#00ff88;
+
+  color:#000;
+
+  font-weight:800;
+
+  margin-top:10px;
+
 }
 
 .badge.put{
-  background:#351620;
-  color:var(--red);
+
+  background:#ff4d4d;
+
+  color:#fff;
+
 }
 
 .badge.error{
-  background:#351620;
-  color:var(--red);
+
+  background:#555;
+
+  color:#fff;
+
 }
 
-.badge.fresh{
-  background:#102c3b;
-  color:#61c7ff;
-}
+.reason{
 
-.sig{
-  font-size:30px;
-  font-weight:900;
-  margin:9px 0 4px;
-}
+  color:#aaa;
 
-.sig.call{color:var(--green)}
-.sig.put{color:var(--red)}
-.sig.wait{color:var(--gold)}
+  font-size:13px;
 
-.sub{
-  color:var(--muted);
-  font-size:12px;
+  margin-top:10px;
+
 }
 
 .row{
+
   display:flex;
-  gap:8px;
-  margin-top:15px;
+
+  justify-content:space-between;
+
+  gap:10px;
+
+  margin-top:10px;
+
 }
 
 .metric{
+
   flex:1;
-  background:#0a111b;
-  border:1px solid var(--line);
+
+  background:#0a0a0a;
+
+  padding:12px;
+
   border-radius:12px;
-  padding:10px;
+
 }
 
-.metric small{
-  display:block;
-  color:var(--muted);
-  font-size:10px;
-}
+.metric-title{
 
-.metric b{
-  display:block;
-  margin-top:4px;
-  font-size:13px;
-}
-
-.actions{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:9px;
-}
-
-.action{
-  padding:13px;
-  border-radius:13px;
-  background:#121e2e;
-  border:1px solid var(--line);
-  font-weight:700;
-}
-
-.primary{
-  background:linear-gradient(135deg,#5d8cff,#4167d9);
-  border:0;
-}
-
-.section{
-  margin-top:18px;
-}
-
-.sectionhead{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:9px;
-}
-
-.sectionhead b{font-size:14px}
-
-.sectionhead span{
   font-size:11px;
-  color:var(--muted);
+
+  color:#777;
+
 }
 
-.premium{
-  border:1px solid #54471e;
-  background:linear-gradient(135deg,#17170e,#0f151c);
-  border-radius:17px;
-  padding:15px;
+.metric-value{
+
+  font-size:15px;
+
+  font-weight:700;
+
+  margin-top:4px;
+
 }
 
-.premium b{color:var(--gold)}
+.footer{
 
-.premium p{
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.5;
-  margin:7px 0 12px;
+  text-align:center;
+
+  color:#555;
+
+  font-size:11px;
+
+  margin-top:20px;
+
 }
 
-.premium button{
-  background:var(--gold);
-  color:#171207;
-  padding:10px 14px;
-  border-radius:11px;
-  font-weight:800;
-}
-
-.bottom{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  max-width:480px;
-  margin:auto;
-  background:#0a1019ee;
-  backdrop-filter:blur(16px);
-  border-top:1px solid var(--line);
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  padding:10px 8px calc(10px + env(safe-area-inset-bottom));
-}
-
-.nav{
-  background:transparent;
-  color:var(--muted);
-  font-size:10px;
-  padding:4px;
-}
-
-.nav.active{color:#fff}
-
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:78px;
-  transform:translateX(-50%);
-  background:#162438;
-  border:1px solid var(--line);
-  padding:10px 14px;
-  border-radius:12px;
-  font-size:12px;
-  display:none;
-  white-space:nowrap;
-  z-index:20;
-}
-
-.toast.show{display:block}
-
-.expired{
-  color:var(--red)!important;
-}
-
-.loading{
-  opacity:.65;
-}
 </style>
+
 </head>
+
 
 <body>
 
-<main class="app">
+<div class="container">
 
-<header class="top">
 
-  <div class="brand">
+  <div class="header">
 
     <div class="logo">
-      AI
+      ʍǟӼӼʏ Trading AI
     </div>
 
-    <div>
-      <b>ʍǟӼӼʏ Trading AI</b>
-      <small>Strategy assistant</small>
-    </div>
-
-  </div>
-
-  <div class="pill">
-    TEST MODE
-  </div>
-
-</header>
-
-
-<div class="pair">
-
-  <div>
-
-    <h1>EUR/USD</h1>
-
-    <div class="sub">
-      1-minute analysis • 3-minute expiry
-    </div>
-
-    <div class="price" id="price">
-      Loading price...
+    <div class="status">
+      ● LIVE DATA
     </div>
 
   </div>
 
-  <span id="feed">
-    ● CONNECTING
-  </span>
 
-</div>
+  <div class="card">
 
+    <div
+      style="
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:10px;
+      "
+    >
 
-<section class="chart">
+      <strong>
+        EUR/USD
+      </strong>
 
-  <div class="grid"></div>
+      <span
+        style="
+          color:#777;
+          font-size:12px;
+        "
+      >
+        1 MIN
+      </span>
 
-  <div class="level resistance">
-
-    <span>
-      RESISTANCE
-    </span>
-
-  </div>
-
-  <div class="level support">
-
-    <span>
-      SUPPORT
-    </span>
-
-  </div>
-
-  <div class="ema">
-
-    <label>
-      EMA 50
-    </label>
-
-  </div>
-
-  <div class="candles" id="candles">
-
-    <div class="c red down">
-      <i class="wick"></i>
-      <i class="body"></i>
     </div>
 
-    <div class="c up">
-      <i class="wick"></i>
-      <i class="body"></i>
-    </div>
 
-    <div class="c red">
-      <i class="wick"></i>
-      <i class="body"></i>
-    </div>
+    <div class="chart">
 
-    <div class="c up">
-      <i class="wick"></i>
-      <i class="body"></i>
-    </div>
+      <div class="chart-line support"></div>
 
-    <div class="c up">
-      <i class="wick"></i>
-      <i class="body"></i>
-    </div>
+      <div class="chart-line resistance"></div>
 
-    <div class="c red down">
-      <i class="wick"></i>
-      <i class="body"></i>
-    </div>
+      <div class="ema"></div>
 
-    <div class="c up">
-      <i class="wick"></i>
-      <i class="body"></i>
-    </div>
-
-    <div class="c up">
-      <i class="wick"></i>
-      <i class="body"></i>
     </div>
 
   </div>
 
-</section>
 
+  <div class="card signal">
 
-<section class="signal">
-
-  <div class="sighead">
-
-    <div class="sub">
-      LATEST ANALYSIS
+    <div class="signal-label">
+      CURRENT SIGNAL
     </div>
 
-    <div class="badge wait" id="badge">
+
+    <div
+      id="sig"
+      class="signal-main wait"
+    >
       WAIT
     </div>
 
-  </div>
 
-
-  <div class="sig wait" id="sig">
-    WAIT
-  </div>
-
-
-  <div class="sub" id="reason">
-    Waiting for live market analysis...
-  </div>
-
-
-  <div class="row">
-
-    <div class="metric">
-
-      <small>
-        Entry status
-      </small>
-
-      <b id="timer">
-        --
-      </b>
-
+    <div
+      id="timer"
+      class="timer"
+    >
+      --
     </div>
 
 
-    <div class="metric">
-
-      <small>
-        Expiry
-      </small>
-
-      <b>
-        3 min
-      </b>
-
+    <div
+      id="badge"
+      class="badge"
+    >
+      WAIT
     </div>
 
 
-    <div class="metric">
-
-      <small>
-        Risk
-      </small>
-
-      <b>
-        1%
-      </b>
-
+    <div
+      id="reason"
+      class="reason"
+    >
+      Waiting for market confirmation...
     </div>
 
   </div>
 
-</section>
+
+  <div class="card">
+
+    <div class="row">
+
+      <div class="metric">
+
+        <div class="metric-title">
+          EMA
+        </div>
+
+        <div
+          id="emaValue"
+          class="metric-value"
+        >
+          --
+        </div>
+
+      </div>
 
 
-<div class="actions">
+      <div class="metric">
 
-  <button
-    class="action primary"
-    onclick="analyze()">
+        <div class="metric-title">
+          SUPPORT
+        </div>
 
-    Analyze now
+        <div
+          id="supportValue"
+          class="metric-value"
+        >
+          --
+        </div>
 
-  </button>
-
-
-  <button
-    class="action"
-    onclick="notifyMe()">
-
-    🔔 Alert
-
-  </button>
+      </div>
 
 
-  <button
-    class="action"
-    onclick="risk()">
+      <div class="metric">
 
-    Risk calculator
+        <div class="metric-title">
+          RESISTANCE
+        </div>
 
-  </button>
+        <div
+          id="resistanceValue"
+          class="metric-value"
+        >
+          --
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
 
 
-  <button
-    class="action"
-    onclick="history()">
+  <div class="footer">
 
-    Signal history
-
-  </button>
-
-</div>
-
-
-<section class="section">
-
-  <div class="sectionhead">
-
-    <b>
-      Premium Signals
-    </b>
-
-    <span>
-      Coming next
-    </span>
+    TEST MODE • 3 MIN TRADE EXPIRY
 
   </div>
 
 
-  <div class="premium">
-
-    <b>
-      ⚡ Premium access
-    </b>
-
-    <p>
-      Private signal feed, performance history and advanced filters will be added after the testing engine is validated.
-    </p>
-
-    <button onclick="premium()">
-      Join waitlist
-    </button>
-
-  </div>
-
-</section>
-
-</main>
-
-
-<nav class="bottom">
-
-  <button class="nav active">
-    ⌂<br>
-    Dashboard
-  </button>
-
-  <button class="nav">
-    ◈<br>
-    Markets
-  </button>
-
-  <button class="nav">
-    ◉<br>
-    Signals
-  </button>
-
-  <button class="nav">
-    ◎<br>
-    Profile
-  </button>
-
-</nav>
-
-
-<div
-  class="toast"
-  id="toast">
 </div>
 
 
 <script>
 
-/* =========================================
-   ʍǟӼӼʏ TRADING AI
-   LIVE DATA / TEST MODE
-   ========================================= */
 
+/* =========================================
+   CONFIGURATION
+========================================= */
 
 const API_URL =
   "https://maxxy-market-api.joelizy22.workers.dev/eurusd";
 
 
-const EMA_LENGTH = 50;
+const EMA_LENGTH =
+  50;
 
-const SR_LOOKBACK = 20;
+
+const SR_LOOKBACK =
+  20;
+
+
+/* =========================================
+   STATE
+========================================= */
+
+let signalLocked =
+  false;
+
+
+let lockedSignal =
+  null;
+
+
+let signalTimer =
+  null;
+
+
+let currentData =
+  null;
 
 
 /*
-  Signal state.
+  NEW:
 
-  When CALL or PUT appears,
-  it becomes locked for the fresh-entry
-  window and the 30-second refresh
-  cannot overwrite it.
+  Stores the exact real-world time
+  when the 12-second entry window ends.
 */
 
-let signalLocked = false;
-
-let lockedSignal = null;
-
-let signalTimer = null;
-
-let currentData = null;
+let maxxyEntryEndsAt =
+  null;
 
 
 /* =========================================
    BASIC HELPERS
-   ========================================= */
+========================================= */
 
-
-function toast(message){
-
-  const element =
-    document.getElementById("toast");
-
-  element.textContent =
-    message;
-
-  element.classList.add("show");
-
-  setTimeout(() => {
-
-    element.classList.remove("show");
-
-  },1800);
-}
-
-
-/* =========================================
-   SET SIGNAL
-   ========================================= */
-
-
-function setSignal(type,reason){
+function setSignal(
+  type,
+  reason
+){
 
   const sig =
     document.getElementById("sig");
 
-  const badge =
-    document.getElementById("badge");
-
-
-  sig.className =
-    "sig " + type.toLowerCase();
+  const reasonBox =
+    document.getElementById("reason");
 
   sig.textContent =
     type;
 
+  sig.className =
+    "signal-main " +
+    (
+      type === "CALL"
+        ? "call"
+        :
+      type === "PUT"
+        ? "put"
+        :
+        "wait"
+    );
 
-  badge.className =
-    "badge";
-
-
-  if(type === "CALL"){
-
-    badge.textContent =
-      "CALL";
-
-  }
-
-
-  else if(type === "PUT"){
-
-    badge.textContent =
-      "PUT";
-
-    badge.classList.add("put");
-
-  }
-
-
-  else{
-
-    badge.textContent =
-      "WAIT";
-
-    badge.classList.add("wait");
-
-  }
-
-
-  document.getElementById("reason")
-    .textContent =
+  reasonBox.textContent =
     reason;
-}
 
-
-/* =========================================
-   FEED STATUS
-   ========================================= */
-
-
-function setFeed(text){
-
-  const feed =
-    document.getElementById("feed");
-
-  feed.textContent =
-    "● " + text;
 }
 
 
 /* =========================================
    EMA
-   ========================================= */
+========================================= */
 
+function calculateEMA(
+  candles,
+  length
+){
 
-function calculateEMA(candles,length){
-
-  if(candles.length < length){
+  if(
+    candles.length <
+    length
+  ){
 
     return null;
+
   }
 
 
@@ -866,264 +595,283 @@ function calculateEMA(candles,length){
     );
 
 
+  const multiplier =
+    2 / (length + 1);
+
+
   let ema =
     closes
-      .slice(0,length)
+      .slice(
+        0,
+        length
+      )
       .reduce(
-        (a,b) => a+b,
+        (a,b) => a + b,
         0
       ) / length;
 
 
-  const multiplier =
-    2 / (length+1);
-
-
   for(
-    let i=length;
-    i<closes.length;
+    let i = length;
+    i < closes.length;
     i++
   ){
 
     ema =
-      ((closes[i]-ema) *
-      multiplier) + ema;
+      (
+        closes[i] - ema
+      ) *
+      multiplier +
+      ema;
+
   }
 
 
   return ema;
+
 }
 
 
 /* =========================================
-   SUPPORT / RESISTANCE
-   ========================================= */
+   SIGNAL ENGINE
+========================================= */
 
+function strategy(
+  candles
+){
 
-function calculateLevels(candles){
-
-  const recent =
-    candles.slice(-SR_LOOKBACK);
-
-
-  const lows =
-    recent.map(
-      c => Number(c.low)
-    );
-
-
-  const highs =
-    recent.map(
-      c => Number(c.high)
-    );
-
-
-  return {
-
-    support:
-      Math.min(...lows),
-
-    resistance:
-      Math.max(...highs)
-
-  };
-}
-
-
-/* =========================================
-   CANDLE ANALYSIS
-   ========================================= */
-
-
-function candleInfo(candle){
-
-  const open =
-    Number(candle.open);
-
-  const high =
-    Number(candle.high);
-
-  const low =
-    Number(candle.low);
-
-  const close =
-    Number(candle.close);
-
-
-  const body =
-    Math.abs(close-open);
-
-
-  const upperWick =
-    high -
-    Math.max(open,close);
-
-
-  const lowerWick =
-    Math.min(open,close) -
-    low;
-
-
-  const range =
-    high-low;
-
-
-  return {
-
-    open,
-    high,
-    low,
-    close,
-
-    body,
-
-    upperWick,
-
-    lowerWick,
-
-    range,
-
-    bullish:
-      close > open,
-
-    bearish:
-      close < open
-
-  };
-}
-
-
-/* =========================================
-   STRATEGY
-   ========================================= */
-
-
-function generateSignal(candles){
-
-  if(candles.length < 60){
+  if(
+    candles.length <
+    60
+  ){
 
     return {
-
       type:"WAIT",
-
-      reason:
-        "Not enough candles for EMA 50 analysis."
-
+      reason:"Not enough market data."
     };
+
   }
 
 
   const last =
-    candleInfo(
-      candles[candles.length-1]
-    );
+    candles[
+      candles.length - 1
+    ];
 
 
   const previous =
-    candleInfo(
-      candles[candles.length-2]
-    );
+    candles[
+      candles.length - 2
+    ];
 
 
-  const ema =
+  const ema50 =
     calculateEMA(
       candles,
       EMA_LENGTH
     );
 
 
-  const levels =
-    calculateLevels(
-      candles
-    );
-
-
-  const range =
-    levels.resistance -
-    levels.support;
-
-
-  if(!ema || range<=0){
+  if(
+    ema50 === null
+  ){
 
     return {
-
       type:"WAIT",
-
-      reason:
-        "Market structure is not clear yet."
-
+      reason:"EMA data unavailable."
     };
+
   }
 
 
-  /*
-    Distance from support/resistance.
-  */
-
-  const supportDistance =
-    Math.abs(
-      last.low -
-      levels.support
+  const closes =
+    candles.map(
+      c => Number(c.close)
     );
 
 
-  const resistanceDistance =
+  const highs =
+    candles.map(
+      c => Number(c.high)
+    );
+
+
+  const lows =
+    candles.map(
+      c => Number(c.low)
+    );
+
+
+  const support =
+    Math.min(
+      ...lows.slice(
+        -SR_LOOKBACK
+      )
+    );
+
+
+  const resistance =
+    Math.max(
+      ...highs.slice(
+        -SR_LOOKBACK
+      )
+    );
+
+
+  const close =
+    Number(last.close);
+
+
+  const open =
+    Number(last.open);
+
+
+  const high =
+    Number(last.high);
+
+
+  const low =
+    Number(last.low);
+
+
+  const previousHigh =
+    Number(previous.high);
+
+
+  const previousLow =
+    Number(previous.low);
+
+
+  const range =
+    Math.max(
+      high - low,
+      0.00000001
+    );
+
+
+  const body =
     Math.abs(
-      last.high -
-      levels.resistance
+      close - open
+    );
+
+
+  const upperWick =
+    high -
+    Math.max(
+      open,
+      close
+    );
+
+
+  const lowerWick =
+    Math.min(
+      open,
+      close
+    ) -
+    low;
+
+
+  const bullish =
+    close > open;
+
+
+  const bearish =
+    close < open;
+
+
+  const bullishTrend =
+    close > ema50;
+
+
+  const bearishTrend =
+    close < ema50;
+
+
+  const levelRange =
+    Math.max(
+      resistance - support,
+      0.00000001
     );
 
 
   const nearSupport =
-    supportDistance <=
-    range*0.15;
+    (
+      close - support
+    ) /
+    levelRange
+    <=
+    0.15;
 
 
   const nearResistance =
-    resistanceDistance <=
-    range*0.15;
+    (
+      resistance - close
+    ) /
+    levelRange
+    <=
+    0.15;
 
-
-  /*
-    Bullish rejection.
-  */
 
   const bullishRejection =
-    last.bullish &&
-    last.lowerWick >=
+    bullish &&
+    lowerWick >=
     Math.max(
-      last.body*1.2,
-      last.range*0.20
+      body * 1.2,
+      range * 0.20
     );
 
-
-  /*
-    Bearish rejection.
-  */
 
   const bearishRejection =
-    last.bearish &&
-    last.upperWick >=
+    bearish &&
+    upperWick >=
     Math.max(
-      last.body*1.2,
-      last.range*0.20
+      body * 1.2,
+      range * 0.20
     );
 
 
   /*
-    EMA trend.
+    BREAKOUT CALL
   */
 
-  const bullishTrend =
-    last.close > ema;
+  if(
+    bullishTrend &&
+    bullish &&
+    close >
+    previousHigh
+  ){
 
+    return {
+      type:"CALL",
+      reason:
+        "Bullish breakout confirmed above the previous candle."
+    };
 
-  const bearishTrend =
-    last.close < ema;
+  }
 
 
   /*
-    CALL setup.
+    BREAKOUT PUT
+  */
+
+  if(
+    bearishTrend &&
+    bearish &&
+    close <
+    previousLow
+  ){
+
+    return {
+      type:"PUT",
+      reason:
+        "Bearish breakout confirmed below the previous candle."
+    };
+
+  }
+
+
+  /*
+    SUPPORT REJECTION
   */
 
   if(
@@ -1133,18 +881,16 @@ function generateSignal(candles){
   ){
 
     return {
-
       type:"CALL",
-
       reason:
-        "Price is above EMA 50 with bullish rejection near support."
-
+        "Bullish rejection confirmed near support."
     };
+
   }
 
 
   /*
-    PUT setup.
+    RESISTANCE REJECTION
   */
 
   if(
@@ -1154,156 +900,153 @@ function generateSignal(candles){
   ){
 
     return {
-
       type:"PUT",
-
       reason:
-        "Price is below EMA 50 with bearish rejection near resistance."
-
+        "Bearish rejection confirmed near resistance."
     };
-  }
 
-
-  /*
-    Bullish breakout.
-  */
-
-  const bullishBreak =
-    bullishTrend &&
-    last.close >
-    previous.high &&
-    last.bullish;
-
-
-  /*
-    Bearish breakout.
-  */
-
-  const bearishBreak =
-    bearishTrend &&
-    last.close <
-    previous.low &&
-    last.bearish;
-
-
-  if(bullishBreak){
-
-    return {
-
-      type:"CALL",
-
-      reason:
-        "Bullish breakout confirmed above the previous candle."
-
-    };
-  }
-
-
-  if(bearishBreak){
-
-    return {
-
-      type:"PUT",
-
-      reason:
-        "Bearish breakout confirmed below the previous candle."
-
-    };
   }
 
 
   return {
-
     type:"WAIT",
-
     reason:
-      "No complete EMA + level + candle confirmation yet."
-
+      "No strong confirmation yet."
   };
+
 }
 
 
 /* =========================================
-   DRAW CANDLES
-   ========================================= */
+   FINISH ENTRY WINDOW
+========================================= */
+
+function expireSignal(){
+
+  clearInterval(
+    signalTimer
+  );
 
 
-function drawCandles(candles){
-
-  const container =
-    document.getElementById("candles");
+  signalTimer =
+    null;
 
 
-  const recent =
-    candles.slice(-8);
+  signalLocked =
+    false;
 
 
-  container.innerHTML =
-    "";
+  lockedSignal =
+    null;
 
 
-  recent.forEach(candle => {
-
-    const info =
-      candleInfo(candle);
+  maxxyEntryEndsAt =
+    null;
 
 
-    const div =
-      document.createElement("div");
+  const timer =
+    document.getElementById(
+      "timer"
+    );
 
 
-    div.className =
-      "c " +
-      (
-        info.bearish
-        ? "red"
-        : "up"
+  timer.textContent =
+    "EXPIRED";
+
+
+  timer.className =
+    "timer expired";
+
+
+  const current =
+    document.getElementById(
+      "sig"
+    ).textContent;
+
+
+  if(
+    current === "CALL" ||
+    current === "PUT"
+  ){
+
+    const badge =
+      document.getElementById(
+        "badge"
       );
 
 
-    const wick =
-      document.createElement("i");
+    badge.textContent =
+      "EXPIRED";
 
 
-    wick.className =
-      "wick";
+    badge.className =
+      "badge error";
 
+  }
 
-    const body =
-      document.createElement("i");
-
-
-    body.className =
-      "body";
-
-
-    div.appendChild(wick);
-
-    div.appendChild(body);
-
-    container.appendChild(div);
-
-  });
 }
 
 
 /* =========================================
-   LOCK CALL / PUT
-   ========================================= */
+   UPDATE COUNTDOWN
+========================================= */
+
+function updateSignalCountdown(){
+
+  if(
+    !maxxyEntryEndsAt
+  ){
+
+    return;
+
+  }
 
 
-/*
-  This timer starts when the signal
-  is actually detected.
-
-  It does NOT use the candle timestamp.
-
-  That prevents a newly detected CALL
-  from immediately becoming EXPIRED.
-*/
+  const remaining =
+    Math.max(
+      0,
+      maxxyEntryEndsAt -
+      Date.now()
+    );
 
 
-function lockSignal(type,reason){
+  if(
+    remaining <= 0
+  ){
+
+    expireSignal();
+
+    return;
+
+  }
+
+
+  const seconds =
+    Math.ceil(
+      remaining / 1000
+    );
+
+
+  const timer =
+    document.getElementById(
+      "timer"
+    );
+
+
+  timer.textContent =
+    seconds + "s";
+
+}
+
+
+/* =========================================
+   LOCK SIGNAL
+========================================= */
+
+function lockSignal(
+  type,
+  reason
+){
 
   signalLocked =
     true;
@@ -1313,7 +1056,9 @@ function lockSignal(type,reason){
     type;
 
 
-  clearInterval(signalTimer);
+  clearInterval(
+    signalTimer
+  );
 
 
   setSignal(
@@ -1323,27 +1068,34 @@ function lockSignal(type,reason){
 
 
   const timer =
-    document.getElementById("timer");
+    document.getElementById(
+      "timer"
+    );
 
 
   const badge =
-    document.getElementById("badge");
+    document.getElementById(
+      "badge"
+    );
 
 
   /*
-    Fresh entry window.
+    IMPORTANT:
+
+    Use real wall-clock time.
+
+    The countdown therefore remains
+    accurate even if Telegram pauses
+    the JavaScript timer while you are
+    inside ExpertOption.
   */
 
-  let seconds =
-    12;
+  maxxyEntryEndsAt =
+    Date.now() + 12000;
 
 
   timer.className =
-    "";
-
-
-  timer.textContent =
-    seconds + "s";
+    "timer";
 
 
   badge.textContent =
@@ -1354,116 +1106,76 @@ function lockSignal(type,reason){
     "badge " +
     (
       type === "PUT"
-      ? "put"
-      : ""
+        ? "put"
+        : ""
     );
 
 
   /*
-    Countdown.
+    Update immediately.
+  */
+
+  updateSignalCountdown();
+
+
+  /*
+    Update frequently while visible.
   */
 
   signalTimer =
-    setInterval(() => {
+    setInterval(
+      updateSignalCountdown,
+      250
+    );
 
-      seconds--;
-
-
-      if(seconds > 0){
-
-        timer.textContent =
-          seconds + "s";
-
-        return;
-      }
-
-
-      /*
-        Entry window finished.
-      */
-
-      clearInterval(
-        signalTimer
-      );
-
-
-      signalLocked =
-        false;
-
-
-      lockedSignal =
-        null;
-
-
-      timer.textContent =
-        "EXPIRED";
-
-
-      timer.className =
-        "expired";
-
-
-      const current =
-        document.getElementById("sig")
-          .textContent;
-
-
-      if(
-        current === "CALL" ||
-        current === "PUT"
-      ){
-
-        document.getElementById("badge")
-          .textContent =
-          "EXPIRED";
-
-        document.getElementById("badge")
-          .className =
-          "badge error";
-
-      }
-
-    },1000);
 }
 
 
 /* =========================================
-   LIVE MARKET ANALYSIS
-   ========================================= */
+   TELEGRAM / MOBILE RETURN FIX
+========================================= */
 
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    /*
+      When you return to Telegram,
+      immediately calculate the real
+      remaining time.
+    */
+
+    if(
+      document.visibilityState ===
+      "visible"
+    ){
+
+      updateSignalCountdown();
+
+    }
+
+  }
+);
+
+
+/* =========================================
+   MARKET ANALYSIS
+========================================= */
 
 async function analyze(){
 
   /*
-    VERY IMPORTANT:
-
-    If there is already a fresh CALL
-    or PUT, don't replace it with WAIT.
-
-    This protects the entry signal
-    from the 30-second refresh.
+    Do not overwrite a fresh signal
+    during its 12-second entry window.
   */
 
-  if(signalLocked){
+  if(
+    signalLocked
+  ){
 
     return;
+
   }
-
-
-  setSignal(
-    "WAIT",
-    "Fetching the latest EUR/USD 1-minute candles..."
-  );
-
-
-  document.getElementById("timer")
-    .textContent =
-    "LOADING";
-
-
-  setFeed(
-    "UPDATING"
-  );
 
 
   try{
@@ -1474,17 +1186,19 @@ async function analyze(){
         "?t=" +
         Date.now(),
         {
-          method:"GET",
           cache:"no-store"
         }
       );
 
 
-    if(!response.ok){
+    if(
+      !response.ok
+    ){
 
       throw new Error(
-        "Market API returned an error."
+        "Market data request failed."
       );
+
     }
 
 
@@ -1494,189 +1208,127 @@ async function analyze(){
 
     if(
       !data ||
-      !Array.isArray(data.values) ||
-      data.values.length < 60
+      !Array.isArray(
+        data.values
+      )
     ){
 
       throw new Error(
-        "Insufficient market data."
+        "Invalid market data."
       );
+
     }
 
 
     /*
-      Twelve Data returns newest first.
+      Twelve Data normally returns
+      newest candle first.
 
-      Reverse it so calculations run
-      oldest -> newest.
+      Reverse it so the oldest candle
+      comes first.
     */
 
-    const allCandles =
-      data.values
-        .slice()
-        .reverse();
+    let candles =
+      [
+        ...data.values
+      ].reverse();
 
 
     /*
-      Ignore the current forming candle.
+      Ignore the newest forming candle.
 
-      Only CLOSED candles are analysed.
+      We only analyze a fully closed
+      1-minute candle.
     */
 
-    const closedCandles =
-      allCandles.slice(0,-1);
+    if(
+      candles.length > 1
+    ){
+
+      candles =
+        candles.slice(
+          0,
+          -1
+        );
+
+    }
 
 
-    const currentCandle =
-      allCandles[
-        allCandles.length-1
-      ];
+    currentData =
+      candles;
 
 
-    currentData = {
-
-      allCandles,
-
-      closedCandles,
-
-      currentCandle
-
-    };
-
-
-    const latest =
-      closedCandles[
-        closedCandles.length-1
-      ];
-
-
-    const latestInfo =
-      candleInfo(
-        latest
+    const result =
+      strategy(
+        candles
       );
 
 
+    /*
+      Display metrics.
+    */
+
     const ema =
       calculateEMA(
-        closedCandles,
+        candles,
         EMA_LENGTH
       );
 
 
-    const levels =
-      calculateLevels(
-        closedCandles
+    const lows =
+      candles.map(
+        c => Number(c.low)
       );
 
 
-    const result =
-      generateSignal(
-        closedCandles
+    const highs =
+      candles.map(
+        c => Number(c.high)
       );
 
 
-    /*
-      Display price.
-    */
-
-    document.getElementById("price")
-      .textContent =
-      "Price: " +
-      latestInfo.close.toFixed(5);
+    const support =
+      Math.min(
+        ...lows.slice(
+          -SR_LOOKBACK
+        )
+      );
 
 
-    /*
-      Live feed.
-    */
-
-    setFeed(
-      "LIVE DATA"
-    );
-
-
-    /*
-      Draw recent candles.
-    */
-
-    drawCandles(
-      closedCandles
-    );
+    const resistance =
+      Math.max(
+        ...highs.slice(
+          -SR_LOOKBACK
+        )
+      );
 
 
-    /*
-      Position EMA visually.
-    */
-
-    if(ema){
-
-      const recent =
-        closedCandles.slice(-20);
+    document.getElementById(
+      "emaValue"
+    ).textContent =
+      ema
+        ? ema.toFixed(5)
+        : "--";
 
 
-      const min =
-        Math.min(
-          ...recent.map(
-            c => Number(c.low)
-          )
-        );
+    document.getElementById(
+      "supportValue"
+    ).textContent =
+      Number(
+        support
+      ).toFixed(5);
 
 
-      const max =
-        Math.max(
-          ...recent.map(
-            c => Number(c.high)
-          )
-        );
-
-
-      if(max > min){
-
-        const position =
-          100 -
-          (
-            (ema-min) /
-            (max-min) *
-            100
-          );
-
-
-        document.querySelector(".ema")
-          .style.top =
-          Math.max(
-            5,
-            Math.min(
-              95,
-              position
-            )
-          ) + "%";
-
-      }
-    }
+    document.getElementById(
+      "resistanceValue"
+    ).textContent =
+      Number(
+        resistance
+      ).toFixed(5);
 
 
     /*
-      Visual support/resistance.
-    */
-
-    if(levels){
-
-      document.querySelector(
-        ".support"
-      ).style.bottom =
-        "27%";
-
-
-      document.querySelector(
-        ".resistance"
-      ).style.top =
-        "25%";
-    }
-
-
-    /*
-      CALL / PUT gets locked.
-
-      WAIT remains WAIT.
+      Strong signal.
     */
 
     if(
@@ -1691,6 +1343,10 @@ async function analyze(){
 
     }
 
+    /*
+      Otherwise WAIT.
+    */
+
     else{
 
       setSignal(
@@ -1699,108 +1355,76 @@ async function analyze(){
       );
 
 
-      document.getElementById("timer")
-        .textContent =
+      const badge =
+        document.getElementById(
+          "badge"
+        );
+
+
+      badge.textContent =
         "WAIT";
+
+
+      badge.className =
+        "badge";
+
+
+      document.getElementById(
+        "timer"
+      ).textContent =
+        "--";
+
     }
 
-
-    toast(
-      "Live EUR/USD analysis completed"
-    );
-
-
-  }catch(error){
+  }
+  catch(error){
 
     console.error(
       error
     );
 
 
-    setFeed(
-      "ERROR"
-    );
-
-
     setSignal(
       "WAIT",
-      "Unable to retrieve live market data. Check the connection and try again."
+      "Unable to refresh market data."
     );
 
 
-    document.getElementById("timer")
-      .textContent =
-      "--";
+    document.getElementById(
+      "badge"
+    ).textContent =
+      "DATA ERROR";
 
 
-    toast(
-      "Market data connection error"
-    );
+    document.getElementById(
+      "badge"
+    ).className =
+      "badge error";
 
   }
+
 }
 
 
 /* =========================================
-   OTHER BUTTONS
-   ========================================= */
-
-
-function notifyMe(){
-
-  toast(
-    "Alerts will activate after Telegram alert integration."
-  );
-}
-
-
-function risk(){
-
-  toast(
-    "Risk calculator module is coming next."
-  );
-}
-
-
-function history(){
-
-  toast(
-    "Signal history will populate from tested signals."
-  );
-}
-
-
-function premium(){
-
-  toast(
-    "Premium waitlist coming next."
-  );
-}
-
-
-/* =========================================
-   INITIAL LOAD
-   ========================================= */
-
+   START
+========================================= */
 
 analyze();
 
 
 /*
-  Refresh every 30 seconds.
-
-  If CALL/PUT is locked,
-  analyze() immediately returns,
-  so the signal cannot be overwritten.
+  Refresh market analysis every
+  30 seconds.
 */
 
-setInterval(() => {
-
-  analyze();
-
-},30000);
+setInterval(
+  analyze,
+  30000
+);
 
 </script>
 
 </body>
+
 </html>
