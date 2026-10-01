@@ -385,6 +385,39 @@ button{
   <button class="action" onclick="risk()">Risk calculator</button>
   <button class="action" onclick="history()">Signal history</button>
 </div>
+  <section class="section" id="riskCalculator" style="display:none;">
+  <div class="sectionhead">
+    <b>Risk Calculator</b>
+    <span>Position sizing</span>
+  </div>
+
+  <div class="premium">
+    <label>Account balance</label>
+    <input
+      id="riskBalance"
+      type="number"
+      placeholder="e.g. 1000"
+      min="0"
+      step="0.01"
+    >
+
+    <label>Risk per trade (%)</label>
+    <input
+      id="riskPercent"
+      type="number"
+      value="1"
+      min="0.1"
+      max="100"
+      step="0.1"
+    >
+
+    <button onclick="calculateRisk()">Calculate risk</button>
+
+    <p id="riskResult">
+      Enter your account balance to calculate your risk amount.
+    </p>
+  </div>
+</section>
 <section class="section">
   <div class="sectionhead"><b>Premium Signals</b><span>Coming next</span></div>
   <div class="premium"><b>⚡ Premium access</b><p>Private signal feed, performance history and advanced filters will be added after the testing engine is validated.</p><button onclick="premium()">Join waitlist</button></div>
@@ -566,7 +599,36 @@ async function analyze(){if(signalLocked){return;}setSignal("WAIT","Fetching the
 async function notifyMe() {
   toast("🔔 Telegram signal alerts are enabled.");
 }
-function risk(){toast("Risk calculator module is coming next.");}
+function risk() {
+  const calculator = document.getElementById("riskCalculator");
+
+  if (calculator.style.display === "none") {
+    calculator.style.display = "block";
+    calculator.scrollIntoView({ behavior: "smooth", block: "center" });
+  } else {
+    calculator.style.display = "none";
+  }
+}
+
+function calculateRisk() {
+  const balance = Number(document.getElementById("riskBalance").value);
+  const percent = Number(document.getElementById("riskPercent").value);
+  const result = document.getElementById("riskResult");
+
+  if (balance <= 0 || percent <= 0) {
+    result.textContent = "Enter a valid account balance and risk percentage.";
+    return;
+  }
+
+  const riskAmount = balance * (percent / 100);
+
+  result.textContent =
+    "Risk amount: " +
+    riskAmount.toFixed(2) +
+    " (" +
+    percent +
+    "% of your account)";
+}
 function history(){toast("Signal history will populate from tested signals.");}
 function premium(){toast("Premium waitlist coming next.");}
 analyze();
