@@ -787,7 +787,11 @@ function premium(){toast("Premium waitlist coming next.");}
 }
 analyze();
 loadPerformance();
-setInterval(()=>{analyze();},60000);
+
+setInterval(() => {
+  analyze();
+  loadPerformance();
+}, 60000);
 </script>
 </body>
 </html>
