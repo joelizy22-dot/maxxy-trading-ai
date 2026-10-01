@@ -430,6 +430,42 @@ button{
     </div>
   </div>
 </section>
+<section class="section" id="performanceSection">
+  <div class="sectionhead">
+    <b>Strategy Performance</b>
+    <span>Test results</span>
+  </div>
+
+  <div class="row">
+    <div class="metric">
+      <small>Tested</small>
+      <b id="statTested">--</b>
+    </div>
+
+    <div class="metric">
+      <small>Wins</small>
+      <b id="statWins">--</b>
+    </div>
+
+    <div class="metric">
+      <small>Losses</small>
+      <b id="statLosses">--</b>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:10px;">
+    <div class="metric">
+      <small>Pushes</small>
+      <b id="statPushes">--</b>
+    </div>
+
+    <div class="metric">
+      <small>Win rate</small>
+      <b id="statWinRate">--</b>
+    </div>
+  </div>
+</section>
+
 <section class="section">
   <div class="sectionhead"><b>Premium Signals</b><span>Coming next</span></div>
   <div class="premium"><b>⚡ Premium access</b><p>Private signal feed, performance history and advanced filters will be added after the testing engine is validated.</p><button onclick="premium()">Join waitlist</button></div>
@@ -707,7 +743,50 @@ async function history() {
   }
 }
 function premium(){toast("Premium waitlist coming next.");}
+  async function loadPerformance() {
+  try {
+    const response = await fetch(
+      "https://maxxy-market-api.joelizy22.workers.dev/signals"
+    );
+
+    if (!response.ok) {
+      throw new Error("Could not load performance data.");
+    }
+
+    const data = await response.json();
+    const signals = Array.isArray(data.signals) ? data.signals : [];
+
+    const resolved = signals.filter(signal =>
+      ["WIN", "LOSS", "PUSH"].includes(signal.outcome)
+    );
+
+    const wins = resolved.filter(signal => signal.outcome === "WIN").length;
+    const losses = resolved.filter(signal => signal.outcome === "LOSS").length;
+    const pushes = resolved.filter(signal => signal.outcome === "PUSH").length;
+
+    const decisiveTrades = wins + losses;
+    const winRate = decisiveTrades > 0
+      ? ((wins / decisiveTrades) * 100).toFixed(1)
+      : "0.0";
+
+    document.getElementById("statTested").textContent = resolved.length;
+    document.getElementById("statWins").textContent = wins;
+    document.getElementById("statLosses").textContent = losses;
+    document.getElementById("statPushes").textContent = pushes;
+    document.getElementById("statWinRate").textContent = winRate + "%";
+
+  } catch (error) {
+    console.error("Performance data error:", error);
+
+    document.getElementById("statTested").textContent = "--";
+    document.getElementById("statWins").textContent = "--";
+    document.getElementById("statLosses").textContent = "--";
+    document.getElementById("statPushes").textContent = "--";
+    document.getElementById("statWinRate").textContent = "--";
+  }
+}
 analyze();
+loadPerformance();
 setInterval(()=>{analyze();},60000);
 </script>
 </body>
