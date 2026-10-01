@@ -422,6 +422,16 @@ function lockSignal(type,reason){
 
   clearInterval(signalTimer);
 
+  if (
+    "Notification" in window &&
+    Notification.permission === "granted"
+  ) {
+    new Notification("ʍǟӼӼʏ Trading AI", {
+      body: `${type} • EUR/USD • 3 min\n${reason}`,
+      tag: "maxxy-signal"
+    });
+  }
+
   setSignal(
     type,
     reason
@@ -553,7 +563,30 @@ document.addEventListener(
 );
 
 async function analyze(){if(signalLocked){return;}setSignal("WAIT","Fetching the latest EUR/USD 1-minute candles...");document.getElementById("timer").textContent="LOADING";setFeed("UPDATING");try{const response=await fetch(API_URL+"?t="+Date.now(),{method:"GET",cache:"no-store"});if(!response.ok){throw new Error("Market API returned an error.");}const data=await response.json();if(!data||!Array.isArray(data.values)||data.values.length<60){throw new Error("Insufficient market data.");}const allCandles=data.values.slice().reverse();const closedCandles=allCandles.slice(0,-1);const currentCandle=allCandles[allCandles.length-1];currentData={allCandles,closedCandles,currentCandle};const latest=closedCandles[closedCandles.length-1];const latestInfo=candleInfo(latest);const ema=calculateEMA(closedCandles,EMA_LENGTH);const levels=calculateLevels(closedCandles);const result=generateSignal(closedCandles);document.getElementById("price").textContent="Price: "+latestInfo.close.toFixed(5);setFeed("LIVE DATA");drawCandles(closedCandles);if(ema){const recent=closedCandles.slice(-20);const min=Math.min(...recent.map(c=>Number(c.low)));const max=Math.max(...recent.map(c=>Number(c.high)));if(max>min){const position=100-((ema-min)/(max-min)*100);document.querySelector(".ema").style.top=Math.max(5,Math.min(95,position))+"%";}}if(levels){document.querySelector(".support").style.bottom="27%";document.querySelector(".resistance").style.top="25%";}if(result.type==="CALL"||result.type==="PUT"){lockSignal(result.type,result.reason);}else{setSignal("WAIT",result.reason);document.getElementById("timer").textContent="WAIT";}toast("Live EUR/USD analysis completed");}catch(error){console.error(error);setFeed("ERROR");setSignal("WAIT","Unable to retrieve live market data. Check the connection and try again.");document.getElementById("timer").textContent="--";toast("Market data connection error");}}
-function notifyMe(){toast("Alerts will activate after Telegram alert integration.");}
+async function notifyMe() {
+  if (!("Notification" in window)) {
+    toast("Notifications are not supported on this device.");
+    return;
+  }
+
+  if (Notification.permission === "granted") {
+    toast("🔔 Signal alerts are already enabled.");
+    return;
+  }
+
+  if (Notification.permission === "denied") {
+    toast("Notifications are blocked. Enable them in your browser settings.");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+
+  if (permission === "granted") {
+    toast("🔔 Signal alerts enabled!");
+  } else {
+    toast("Notification permission was not enabled.");
+  }
+}
 function risk(){toast("Risk calculator module is coming next.");}
 function history(){toast("Signal history will populate from tested signals.");}
 function premium(){toast("Premium waitlist coming next.");}
