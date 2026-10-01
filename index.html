@@ -418,6 +418,18 @@ button{
     </p>
   </div>
 </section>
+  <section class="section" id="signalHistory" style="display:none;">
+  <div class="sectionhead">
+    <b>Signal History</b>
+    <span>Tested signals</span>
+  </div>
+
+  <div class="premium">
+    <div id="historyList">
+      Loading signal history...
+    </div>
+  </div>
+</section>
 <section class="section">
   <div class="sectionhead"><b>Premium Signals</b><span>Coming next</span></div>
   <div class="premium"><b>⚡ Premium access</b><p>Private signal feed, performance history and advanced filters will be added after the testing engine is validated.</p><button onclick="premium()">Join waitlist</button></div>
@@ -629,7 +641,71 @@ function calculateRisk() {
     percent +
     "% of your account)";
 }
-function history(){toast("Signal history will populate from tested signals.");}
+async function history() {
+  const panel = document.getElementById("signalHistory");
+  const list = document.getElementById("historyList");
+
+  if (panel.style.display !== "none") {
+    panel.style.display = "none";
+    return;
+  }
+
+  panel.style.display = "block";
+  list.innerHTML = "Loading signal history...";
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  try {
+    const response = await fetch(
+      "https://maxxy-market-api.joelizy22.workers.dev/signals"
+    );
+
+    if (!response.ok) {
+      throw new Error("Could not load signal history.");
+    }
+
+    const data = await response.json();
+    const signals = Array.isArray(data.signals) ? data.signals : [];
+
+    if (signals.length === 0) {
+      list.innerHTML = "No tested signals yet.";
+      return;
+    }
+
+    const recentSignals = signals.slice().reverse().slice(0, 20);
+
+    list.innerHTML = recentSignals.map(signal => {
+      const outcome = signal.outcome || "PENDING";
+      const entry =
+        signal.entryPrice != null ? signal.entryPrice : "--";
+      const expiry =
+        signal.expiryPrice != null ? signal.expiryPrice : "--";
+
+      const time = signal.signalCreatedAt
+        ? new Date(signal.signalCreatedAt).toLocaleString()
+        : "--";
+
+      return `
+        <div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1);">
+          <b>${signal.symbol || "EUR/USD"} • ${signal.direction || "--"}</b>
+          <span style="float:right;"><b>${outcome}</b></span>
+          <div class="sub" style="margin-top:6px;">
+            ${time}
+          </div>
+          <div style="margin-top:6px;">
+            Entry: ${entry} • Expiry: ${expiry}
+          </div>
+          <div class="sub" style="margin-top:4px;">
+            ${signal.reason || ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  } catch (error) {
+    console.error("Signal history error:", error);
+    list.innerHTML = "Unable to load signal history right now.";
+  }
+}
 function premium(){toast("Premium waitlist coming next.");}
 analyze();
 setInterval(()=>{analyze();},60000);
