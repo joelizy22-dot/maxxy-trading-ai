@@ -548,7 +548,40 @@ let lockedSignal = null;
 let signalTimer = null;
 let currentData = null;
 function toast(message){const element=document.getElementById("toast");element.textContent=message;element.classList.add("show");setTimeout(()=>{element.classList.remove("show");},1800);}
-function setSignal(type,reason){const sig=document.getElementById("sig");const badge=document.getElementById("badge");sig.className="sig "+type.toLowerCase();sig.textContent=type;badge.className="badge";if(type==="CALL"){badge.textContent="CALL";}else if(type==="PUT"){badge.textContent="PUT";badge.classList.add("put");}else{badge.textContent="WAIT";badge.classList.add("wait");}document.getElementById("reason").textContent=reason;}
+function setSignal(type, reason) {
+  const sig = document.getElementById("sig");
+  const badge = document.getElementById("badge");
+  const reasonBox = document.getElementById("reason");
+  const signalsLatest = document.getElementById("signalsLatest");
+
+  sig.className = "sig " + type.toLowerCase();
+  sig.textContent = type;
+  badge.className = "badge";
+
+  if (type === "CALL") {
+    badge.textContent = "CALL";
+  } else if (type === "PUT") {
+    badge.textContent = "PUT";
+    badge.classList.add("put");
+  } else {
+    badge.textContent = "WAIT";
+    badge.classList.add("wait");
+  }
+
+  reasonBox.textContent = reason;
+
+  if (signalsLatest) {
+    const time = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    signalsLatest.innerHTML =
+      "<b>" + type + " • EUR/USD</b><br>" +
+      "<span style='opacity:.7'>" + time + "</span><br>" +
+      reason;
+  }
+}
 function setFeed(text){const feed=document.getElementById("feed");feed.textContent="● "+text;}
 function calculateEMA(candles,length){if(candles.length<length){return null;}const closes=candles.map(c=>Number(c.close));let ema=closes.slice(0,length).reduce((a,b)=>a+b,0)/length;const multiplier=2/(length+1);for(let i=length;i<closes.length;i++){ema=((closes[i]-ema)*multiplier)+ema;}return ema;}
 function calculateLevels(candles){const recent=candles.slice(-SR_LOOKBACK);const lows=recent.map(c=>Number(c.low));const highs=recent.map(c=>Number(c.high));return{support:Math.min(...lows),resistance:Math.max(...highs)};}
