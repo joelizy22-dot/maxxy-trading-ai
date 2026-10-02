@@ -470,10 +470,44 @@ button{
   <div class="sectionhead"><b>Premium Signals</b><span>Coming next</span></div>
   <div class="premium"><b>⚡ Premium access</b><p>Private signal feed, performance history and advanced filters will be added after the testing engine is validated.</p><button onclick="premium()">Join waitlist</button></div>
 </section>
+  <section class="section" id="marketsPanel" style="display:none;">
+  <div class="sectionhead">
+    <b>Markets</b>
+    <span>Select a market</span>
+  </div>
+
+  <div class="premium">
+    <b>EUR/USD</b>
+    <p>1-minute analysis • 3-minute expiry</p>
+    <button onclick="selectMarket('EUR/USD')">ACTIVE</button>
+  </div>
+
+  <div class="premium" style="opacity:.55; margin-top:10px;">
+    <b>GBP/USD</b>
+    <p>Market support coming soon</p>
+    <button disabled>COMING SOON</button>
+  </div>
+
+  <div class="premium" style="opacity:.55; margin-top:10px;">
+    <b>USD/JPY</b>
+    <p>Market support coming soon</p>
+    <button disabled>COMING SOON</button>
+  </div>
+
+  <div class="premium" style="opacity:.55; margin-top:10px;">
+    <b>AUD/USD</b>
+    <p>Market support coming soon</p>
+    <button disabled>COMING SOON</button>
+  </div>
+
+  <button class="action" onclick="closeMarkets()" style="margin-top:12px;">
+    Back to Dashboard
+  </button>
+</section>
 </main>
 <nav class="bottom">
   <button class="nav active">⌂<br>Dashboard</button>
-  <button class="nav">◈<br>Markets</button>
+  <button class="nav" onclick="openMarkets()">Markets</button>
   <button class="nav">◉<br>Signals</button>
   <button class="nav">◎<br>Profile</button>
 </nav>
@@ -784,6 +818,39 @@ function premium(){toast("Premium waitlist coming next.");}
     document.getElementById("statPushes").textContent = "--";
     document.getElementById("statWinRate").textContent = "--";
   }
+}
+  function openMarkets() {
+  const panel = document.getElementById("marketsPanel");
+
+  if (!panel) return;
+
+  panel.style.display = "block";
+  panel.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+function closeMarkets() {
+  const panel = document.getElementById("marketsPanel");
+
+  if (!panel) return;
+
+  panel.style.display = "none";
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+function selectMarket(symbol) {
+  if (symbol !== "EUR/USD") {
+    toast("This market is coming soon.");
+    return;
+  }
+
+  closeMarkets();
+  toast("EUR/USD is the active market.");
 }
 analyze();
 loadPerformance();
