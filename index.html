@@ -381,7 +381,7 @@ button{
   </div>
 </section>
 <div class="actions">
-  <button class="action primary" onclick="analyze()">Analyze now</button>
+  <button class="action primary" onclick="analyze(true)">Analyze now</button>
   <button class="action" onclick="notifyMe()">🔔 Alert</button>
   <button class="action" onclick="risk()">Risk calculator</button>
   <button class="action" onclick="history()">Signal history</button>
@@ -579,6 +579,11 @@ button{
 <div class="toast" id="toast"></div>
 <script>
 const API_URL = "https://maxxy-market-api.joelizy22.workers.dev/eurusd";
+const MARKET_REFRESH_MS = 120000;
+const MARKET_CACHE_MS = 115000;
+let lastMarketFetchAt = 0;
+let cachedMarketPayload = null;
+let marketFetchPromise = null;
 const EMA_LENGTH = 50;
 const SR_LOOKBACK = 20;
 let signalLocked = false;
@@ -749,19 +754,7 @@ clearInterval(signalTimer);
     let expiryPrice = null;
 
 try {
-  const expiryResponse = await fetch(
-    API_URL + "?t=" + Date.now(),
-    {
-      method: "GET",
-      cache: "no-store"
-    }
-  );
-
-  if (!expiryResponse.ok) {
-    throw new Error("Could not fetch expiry price.");
-  }
-
-  const expiryData = await expiryResponse.json();
+  const expiryData = await getMarketData(true);
 
   if (
     expiryData &&
@@ -893,7 +886,36 @@ document.addEventListener(
   }
 );
 
-async function analyze(){if(signalLocked){return;}setSignal("WAIT","Fetching the latest EUR/USD 1-minute candles...");document.getElementById("timer").textContent="LOADING";setFeed("UPDATING");try{const response=await fetch(API_URL+"?t="+Date.now(),{method:"GET",cache:"no-store"});if(!response.ok){throw new Error("Market API returned an error.");}const data=await response.json();if(!data||!Array.isArray(data.values)||data.values.length<60){throw new Error("Insufficient market data.");}const allCandles=data.values.slice().reverse();const closedCandles=allCandles.slice(0,-1);const currentCandle=allCandles[allCandles.length-1];currentData={allCandles,closedCandles,currentCandle};const latest=closedCandles[closedCandles.length-1];const latestInfo=candleInfo(latest);const ema=calculateEMA(closedCandles,EMA_LENGTH);const levels=calculateLevels(closedCandles);const result=generateSignal(closedCandles);document.getElementById("price").textContent="Price: "+latestInfo.close.toFixed(5);setFeed("LIVE DATA");drawCandles(closedCandles);if(ema){const recent=closedCandles.slice(-20);const min=Math.min(...recent.map(c=>Number(c.low)));const max=Math.max(...recent.map(c=>Number(c.high)));if(max>min){const position=100-((ema-min)/(max-min)*100);document.querySelector(".ema").style.top=Math.max(5,Math.min(95,position))+"%";}}if(levels){document.querySelector(".support").style.bottom="27%";document.querySelector(".resistance").style.top="25%";}if(result.type==="CALL"||result.type==="PUT"){lockSignal(result.type,result.reason);}else{setSignal("WAIT",result.reason);document.getElementById("timer").textContent="WAIT";}toast("Live EUR/USD analysis completed");}catch(error){console.error(error);setFeed("ERROR");setSignal("WAIT","Unable to retrieve live market data. Check the connection and try again.");document.getElementById("timer").textContent="--";toast("Market data connection error");}}
+async function getMarketData(force = false) {
+  const now = Date.now();
+  if (!force && cachedMarketPayload && now - lastMarketFetchAt < MARKET_CACHE_MS) {
+    return cachedMarketPayload;
+  }
+  if (marketFetchPromise) return marketFetchPromise;
+
+  marketFetchPromise = (async () => {
+    const response = await fetch(API_URL + "?t=" + Date.now(), {
+      method: "GET",
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("Market API returned an error.");
+    const data = await response.json();
+    if (!data || !Array.isArray(data.values) || data.values.length < 60) {
+      throw new Error("Insufficient market data.");
+    }
+    cachedMarketPayload = data;
+    lastMarketFetchAt = Date.now();
+    return data;
+  })();
+
+  try {
+    return await marketFetchPromise;
+  } finally {
+    marketFetchPromise = null;
+  }
+}
+
+async function analyze(force = false){if(signalLocked){return;}setSignal("WAIT","Fetching the latest EUR/USD 1-minute candles...");document.getElementById("timer").textContent="LOADING";setFeed("UPDATING");try{const data=await getMarketData(force);const allCandles=data.values.slice().reverse();const closedCandles=allCandles.slice(0,-1);const currentCandle=allCandles[allCandles.length-1];currentData={allCandles,closedCandles,currentCandle};const latest=closedCandles[closedCandles.length-1];const latestInfo=candleInfo(latest);const ema=calculateEMA(closedCandles,EMA_LENGTH);const levels=calculateLevels(closedCandles);const result=generateSignal(closedCandles);document.getElementById("price").textContent="Price: "+latestInfo.close.toFixed(5);setFeed("LIVE DATA");drawCandles(closedCandles);if(ema){const recent=closedCandles.slice(-20);const min=Math.min(...recent.map(c=>Number(c.low)));const max=Math.max(...recent.map(c=>Number(c.high)));if(max>min){const position=100-((ema-min)/(max-min)*100);document.querySelector(".ema").style.top=Math.max(5,Math.min(95,position))+"%";}}if(levels){document.querySelector(".support").style.bottom="27%";document.querySelector(".resistance").style.top="25%";}if(result.type==="CALL"||result.type==="PUT"){lockSignal(result.type,result.reason);}else{setSignal("WAIT",result.reason);document.getElementById("timer").textContent="WAIT";}toast("Live EUR/USD analysis completed");}catch(error){console.error(error);setFeed("ERROR");setSignal("WAIT","Unable to retrieve live market data. Check the connection and try again.");document.getElementById("timer").textContent="--";toast("Market data connection error");}}
 async function notifyMe() {
   toast("🔔 Telegram signal alerts are enabled.");
 }
@@ -1184,9 +1206,10 @@ analyze();
 loadPerformance();
 
 setInterval(() => {
-  analyze();
-  loadPerformance();
-}, 60000);
+  if (document.visibilityState === "visible") {
+    analyze();
+  }
+}, MARKET_REFRESH_MS);
 </script>
 </body>
 </html>
