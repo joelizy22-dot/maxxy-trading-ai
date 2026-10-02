@@ -681,6 +681,7 @@ function lockSignal(type,reason){
       : ""
     );
 
+  let expiryProcessing = false;
   async function updateCountdown(){
 
     const remaining =
@@ -702,13 +703,58 @@ function lockSignal(type,reason){
 
       return;
     }
+    if (expiryProcessing) {
+  return;
+}
 
-    const expiryPrice =
-  currentData && currentData.currentCandle
-    ? Number(currentData.currentCandle.close)
-    : null;
-    let result = null;
+expiryProcessing = true;
+clearInterval(signalTimer);
 
+    let expiryPrice = null;
+
+try {
+  const expiryResponse = await fetch(
+    API_URL + "?t=" + Date.now(),
+    {
+      method: "GET",
+      cache: "no-store"
+    }
+  );
+
+  if (!expiryResponse.ok) {
+    throw new Error("Could not fetch expiry price.");
+  }
+
+  const expiryData = await expiryResponse.json();
+
+  if (
+    expiryData &&
+    Array.isArray(expiryData.values) &&
+    expiryData.values.length > 0
+  ) {
+    const expiryCandles = expiryData.values.slice().reverse();
+    const expiryCandle = expiryCandles[expiryCandles.length - 1];
+
+    expiryPrice = Number(expiryCandle.close);
+  }
+} catch (error) {
+  console.error("Expiry price error:", error);
+}
+
+if (expiryPrice === null || !Number.isFinite(expiryPrice)) {
+  timer.textContent = "CHECKING...";
+
+  expiryProcessing = false;
+
+  signalTimer = setInterval(
+    updateCountdown,
+    2000
+  );
+
+  return;
+}
+
+let result = null;
 if (
   signalEntryPrice !== null &&
   expiryPrice !== null &&
