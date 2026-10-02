@@ -593,7 +593,41 @@ function calculateLevels(candles){const recent=candles.slice(-SR_LOOKBACK);const
 function candleInfo(candle){const open=Number(candle.open);const high=Number(candle.high);const low=Number(candle.low);const close=Number(candle.close);const body=Math.abs(close-open);const upperWick=high-Math.max(open,close);const lowerWick=Math.min(open,close)-low;const range=high-low;return{open,high,low,close,body,upperWick,lowerWick,range,bullish:close>open,bearish:close<open};}
 function generateSignal(candles){if(candles.length<60){return{type:"WAIT",reason:"Not enough candles for EMA 50 analysis."};}const last=candleInfo(candles[candles.length-1]);const previous=candleInfo(candles[candles.length-2]);const ema=calculateEMA(candles,EMA_LENGTH);const levels=calculateLevels(candles);const range=levels.resistance-levels.support;if(!ema||range<=0){return{type:"WAIT",reason:"Market structure is not clear yet."};}const supportDistance=Math.abs(last.low-levels.support);const resistanceDistance=Math.abs(last.high-levels.resistance);const nearSupport=supportDistance<=range*0.15;const nearResistance=resistanceDistance<=range*0.15;const bullishRejection=last.bullish&&last.lowerWick>=Math.max(last.body*1.2,last.range*0.20);const bearishRejection=last.bearish&&last.upperWick>=Math.max(last.body*1.2,last.range*0.20);const bullishTrend=last.close>ema;const bearishTrend=last.close<ema;if(bullishTrend&&nearSupport&&bullishRejection){return{type:"CALL",reason:"Price is above EMA 50 with bullish rejection near support."};}if(bearishTrend&&nearResistance&&bearishRejection){return{type:"PUT",reason:"Price is below EMA 50 with bearish rejection near resistance."};}const bullishBreak=bullishTrend&&last.close>previous.high&&last.bullish;const bearishBreak=bearishTrend&&last.close<previous.low&&last.bearish;if(bullishBreak){return{type:"CALL",reason:"Bullish breakout confirmed above the previous candle."};}if(bearishBreak){return{type:"PUT",reason:"Bearish breakout confirmed below the previous candle."};}return{type:"WAIT",reason:"No complete EMA + level + candle confirmation yet."};}
 function drawCandles(candles){const container=document.getElementById("candles");const recent=candles.slice(-8);container.innerHTML="";recent.forEach(candle=>{const info=candleInfo(candle);const div=document.createElement("div");div.className="c "+(info.bearish?"red":"up");const wick=document.createElement("i");wick.className="wick";const body=document.createElement("i");body.className="body";div.appendChild(wick);div.appendChild(body);container.appendChild(div);});}
+function addSignalHistory(type, result, reason) {
+  const time = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 
+  signalHistory.unshift({
+    type,
+    result,
+    reason,
+    time
+  });
+
+  // Keep only the latest 20 results
+  signalHistory = signalHistory.slice(0, 20);
+
+  renderSignalHistory();
+}
+
+function renderSignalHistory() {
+  const box = document.getElementById("signalHistory");
+  if (!box) return;
+
+  if (signalHistory.length === 0) {
+    box.innerHTML = "No completed signals yet.";
+    return;
+  }
+
+  box.innerHTML = signalHistory.map(item => `
+    <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);">
+      <b>${item.type} • EUR/USD — ${item.result}</b><br>
+      <span style="opacity:.7">${item.time} • ${item.reason}</span>
+    </div>
+  `).join("");
+}
 function lockSignal(type,reason){
 
   signalLocked = true;
@@ -604,7 +638,7 @@ function lockSignal(type,reason){
   signalEntryPrice = Number(currentData.currentCandle.close);
   signalEntryTime = Date.now();
 }
-
+S
   clearInterval(signalTimer);
 
   if (
@@ -668,8 +702,37 @@ function lockSignal(type,reason){
       return;
     }
 
+    const expiryPrice =
+  currentData && currentData.currentCandle
+    ? Number(currentData.currentCandle.close)
+    : null;
+    let result = null;
+
+if (
+  signalEntryPrice !== null &&
+  expiryPrice !== null &&
+  lockedSignal
+) {
+  if (expiryPrice === signalEntryPrice) {
+    result = "PUSH";
+  } else if (
+    (lockedSignal === "CALL" && expiryPrice > signalEntryPrice) ||
+    (lockedSignal === "PUT" && expiryPrice < signalEntryPrice)
+  ) {
+    result = "WIN";
+  } else {
+    result = "LOSS";
+  }
+}
     clearInterval(signalTimer);
 
+    if (result && lockedSignal) {
+  addSignalHistory(
+    lockedSignal,
+    result,
+    `Entry: ${signalEntryPrice} • Expiry: ${expiryPrice}`
+  );
+}
     signalLocked = false;
 
     lockedSignal = null;
