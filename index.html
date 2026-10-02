@@ -533,12 +533,48 @@ button{
     Back to Dashboard
   </button>
 </section>
+  <section class="section" id="profilePanel" style="display:none;">
+    <div class="sectionhead">
+      <b>Profile</b>
+      <span>MÀXXY account</span>
+    </div>
+
+    <div class="premium">
+      <b>ʍǟӼӼʏ Trading AI</b>
+      <p>Strategy assistant • Test Mode</p>
+    </div>
+
+    <div class="row">
+      <div class="metric"><small>Active market</small><b>EUR/USD</b></div>
+      <div class="metric"><small>Timeframe</small><b>1 minute</b></div>
+      <div class="metric"><small>Expiry</small><b>3 minutes</b></div>
+    </div>
+
+    <div class="premium" style="margin-top:12px;">
+      <b>Telegram Alerts</b>
+      <p>Real signal alerts are enabled through your MÀXXY Telegram bot.</p>
+      <div class="pill" style="display:inline-block;color:var(--green);">● ENABLED</div>
+    </div>
+
+    <div class="section" style="margin-top:14px;">
+      <div class="sectionhead"><b>Strategy Performance</b><span>Resolved signals</span></div>
+      <div class="row">
+        <div class="metric"><small>Tested</small><b id="profileTested">--</b></div>
+        <div class="metric"><small>Wins</small><b id="profileWins">--</b></div>
+        <div class="metric"><small>Losses</small><b id="profileLosses">--</b></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div class="metric"><small>Pushes</small><b id="profilePushes">--</b></div>
+        <div class="metric"><small>Win rate</small><b id="profileWinRate">--</b></div>
+      </div>
+    </div>
+  </section>
 </main>
 <nav class="bottom">
-  <button class="nav active">⌂<br>Dashboard</button>
-  <button class="nav" onclick="openMarkets()">Markets</button>
-  <button class="nav" onclick="openSignals()">◉<br>Signals</button>
-  <button class="nav">◎<br>Profile</button>
+  <button class="nav active" data-tab="dashboard" onclick="openDashboard()">⌂<br>Dashboard</button>
+  <button class="nav" data-tab="markets" onclick="openMarkets()">Markets</button>
+  <button class="nav" data-tab="signals" onclick="openSignals()">◉<br>Signals</button>
+  <button class="nav" data-tab="profile" onclick="openProfile()">◎<br>Profile</button>
 </nav>
 <div class="toast" id="toast"></div>
 <script>
@@ -999,14 +1035,69 @@ function premium(){toast("Premium waitlist coming next.");}
     document.getElementById("statWinRate").textContent = "--";
   }
 }
+  function setActiveNav(tab) {
+  document.querySelectorAll(".bottom .nav").forEach(button => {
+    button.classList.toggle("active", button.dataset.tab === tab);
+  });
+}
+
+function hideMainPanels() {
+  const content = document.getElementById("dashboardContent");
+  const markets = document.getElementById("marketsPanel");
+  const signals = document.getElementById("signalsPanel");
+  const profile = document.getElementById("profilePanel");
+
+  if (content) content.style.display = "none";
+  if (markets) markets.style.display = "none";
+  if (signals) signals.style.display = "none";
+  if (profile) profile.style.display = "none";
+}
+
+function openDashboard() {
+  hideMainPanels();
+  const content = document.getElementById("dashboardContent");
+  if (content) content.style.display = "block";
+  setActiveNav("dashboard");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function syncProfilePerformance() {
+  const pairs = [
+    ["statTested", "profileTested"],
+    ["statWins", "profileWins"],
+    ["statLosses", "profileLosses"],
+    ["statPushes", "profilePushes"],
+    ["statWinRate", "profileWinRate"]
+  ];
+
+  pairs.forEach(([sourceId, targetId]) => {
+    const source = document.getElementById(sourceId);
+    const target = document.getElementById(targetId);
+    if (source && target) target.textContent = source.textContent;
+  });
+}
+
+async function openProfile() {
+  hideMainPanels();
+  const profile = document.getElementById("profilePanel");
+  if (!profile) return;
+
+  profile.style.display = "block";
+  setActiveNav("profile");
+  await loadPerformance();
+  syncProfilePerformance();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
   function openMarkets() {
   const panel = document.getElementById("marketsPanel");
   const content = document.getElementById("dashboardContent");
 
   if (!panel || !content) return;
 
-  content.style.display = "none";
+  hideMainPanels();
   panel.style.display = "block";
+  setActiveNav("markets");
 
   window.scrollTo({
     top: 0,
@@ -1022,6 +1113,7 @@ function closeMarkets() {
 
   panel.style.display = "none";
   content.style.display = "block";
+  setActiveNav("dashboard");
 
   window.scrollTo({
     top: 0,
@@ -1035,9 +1127,9 @@ function closeMarkets() {
 
   if (!panel || !content) return;
 
-  content.style.display = "none";
-  if (markets) markets.style.display = "none";
+  hideMainPanels();
   panel.style.display = "block";
+  setActiveNav("signals");
 
   window.scrollTo({
     top: 0,
@@ -1054,6 +1146,7 @@ function closeSignals() {
 
   panel.style.display = "none";
   content.style.display = "block";
+  setActiveNav("dashboard");
 
   window.scrollTo({
     top: 0,
