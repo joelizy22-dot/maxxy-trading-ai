@@ -506,11 +506,36 @@ button{
     Back to Dashboard
   </button>
 </section>
+  <section class="section" id="signalsPanel" style="display:none;">
+  <div class="sectionhead">
+    <b>Signals</b>
+    <span>Signal center</span>
+  </div>
+
+  <div class="premium">
+    <b>EUR/USD Signals</b>
+    <p>View the latest analyzed signal and your tested signal history.</p>
+  </div>
+
+  <div class="premium" style="margin-top:10px;">
+    <b>Latest Signal</b>
+    <p id="signalsLatest">Waiting for the latest market analysis...</p>
+  </div>
+
+  <div class="premium" style="margin-top:10px;">
+    <b>Signal History</b>
+    <p>Your tested WIN, LOSS and PUSH results will appear here.</p>
+  </div>
+
+  <button class="action" onclick="closeSignals()" style="margin-top:12px;">
+    Back to Dashboard
+  </button>
+</section>
 </main>
 <nav class="bottom">
   <button class="nav active">⌂<br>Dashboard</button>
   <button class="nav" onclick="openMarkets()">Markets</button>
-  <button class="nav">◉<br>Signals</button>
+  <button class="nav" onclick="openSignals()">◉<br>Signals</button>
   <button class="nav">◎<br>Profile</button>
 </nav>
 <div class="toast" id="toast"></div>
@@ -838,6 +863,37 @@ function premium(){toast("Premium waitlist coming next.");}
 
 function closeMarkets() {
   const panel = document.getElementById("marketsPanel");
+  const content = document.getElementById("dashboardContent");
+
+  if (!panel || !content) return;
+
+  panel.style.display = "none";
+  content.style.display = "block";
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+  function openSignals() {
+  const panel = document.getElementById("signalsPanel");
+  const content = document.getElementById("dashboardContent");
+  const markets = document.getElementById("marketsPanel");
+
+  if (!panel || !content) return;
+
+  content.style.display = "none";
+  if (markets) markets.style.display = "none";
+  panel.style.display = "block";
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+function closeSignals() {
+  const panel = document.getElementById("signalsPanel");
   const content = document.getElementById("dashboardContent");
 
   if (!panel || !content) return;
