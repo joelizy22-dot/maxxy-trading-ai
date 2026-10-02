@@ -350,7 +350,8 @@ button{
 </style>
 </head>
 <body>
-<main class="app">
+<main class="app" id="dashboard">
+  <div id="dashboardContent">
 <header class="top">
   <div class="brand">
     <div class="logo">AI</div>
@@ -470,6 +471,7 @@ button{
   <div class="sectionhead"><b>Premium Signals</b><span>Coming next</span></div>
   <div class="premium"><b>⚡ Premium access</b><p>Private signal feed, performance history and advanced filters will be added after the testing engine is validated.</p><button onclick="premium()">Join waitlist</button></div>
 </section>
+    </div>
   <section class="section" id="marketsPanel" style="display:none;">
   <div class="sectionhead">
     <b>Markets</b>
@@ -821,28 +823,33 @@ function premium(){toast("Premium waitlist coming next.");}
 }
   function openMarkets() {
   const panel = document.getElementById("marketsPanel");
+  const content = document.getElementById("dashboardContent");
 
-  if (!panel) return;
+  if (!panel || !content) return;
 
+  content.style.display = "none";
   panel.style.display = "block";
-  panel.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
-}
 
-function closeMarkets() {
-  const panel = document.getElementById("marketsPanel");
-
-  if (!panel) return;
-
-  panel.style.display = "none";
   window.scrollTo({
     top: 0,
     behavior: "smooth"
   });
 }
 
+function closeMarkets() {
+  const panel = document.getElementById("marketsPanel");
+  const content = document.getElementById("dashboardContent");
+
+  if (!panel || !content) return;
+
+  panel.style.display = "none";
+  content.style.display = "block";
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
 function selectMarket(symbol) {
   if (symbol !== "EUR/USD") {
     toast("This market is coming soon.");
