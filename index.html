@@ -600,6 +600,12 @@ function lockSignal(type,reason){
 
   lockedSignal = type;
 
+  if (currentData && currentData.length) {
+  const latestCandle = currentData[currentData.length - 1];
+  signalEntryPrice = Number(latestCandle.close);
+  signalEntryTime = Date.now();
+}
+
   clearInterval(signalTimer);
 
   if (
