@@ -549,43 +549,7 @@ let signalLocked = false;
 let lockedSignal = null;
 let signalTimer = null;
 let currentData = null;
-  let signalHistory = [];
-
-function addSignalHistory(type, result, reason) {
-  const time = new Date().toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-
-  signalHistory.unshift({
-    type,
-    result,
-    reason,
-    time
-  });
-
-  // Keep only the latest 20 results
-  signalHistory = signalHistory.slice(0, 20);
-
-  renderSignalHistory();
-}
-
-function renderSignalHistory() {
-  const box = document.getElementById("signalsHistory");
-  if (!box) return;
-
-  if (signalHistory.length === 0) {
-    box.innerHTML = "No completed signals yet.";
-    return;
-  }
-
-  box.innerHTML = signalHistory.map(item => `
-    <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);">
-      <b>${item.type} • EUR/USD — ${item.result}</b><br>
-      <span style="opacity:.7;">${item.time} • ${item.reason}</span>
-    </div>
-  `).join("");
-}
+  
 function toast(message){const element=document.getElementById("toast");element.textContent=message;element.classList.add("show");setTimeout(()=>{element.classList.remove("show");},1800);}
 function setSignal(type, reason) {
   const sig = document.getElementById("sig");
@@ -962,6 +926,7 @@ function closeMarkets() {
     top: 0,
     behavior: "smooth"
   });
+    loadSignalsPage();
 }
 
 function closeSignals() {
@@ -978,7 +943,25 @@ function closeSignals() {
     behavior: "smooth"
   });
 }
-function selectMarket(symbol) {
+
+function loadSignalsPage() {
+  const latestBox = document.getElementById("signalsLatest");
+
+  if (latestBox) {
+    if (lockedSignal) {
+      latestBox.innerHTML =
+        "<b>" + lockedSignal + " • EUR/USD</b><br>" +
+        "<span style='opacity:.7'>Current locked trading signal</span>";
+    } else {
+      latestBox.innerHTML =
+        "<b>WAIT • EUR/USD</b><br>" +
+        "<span style='opacity:.7'>Waiting for the next confirmed signal...</span>";
+    }
+  }
+
+  renderSignalHistory();
+}  
+  function selectMarket(symbol) {
   if (symbol !== "EUR/USD") {
     toast("This market is coming soon.");
     return;
