@@ -549,6 +549,8 @@ let signalLocked = false;
 let lockedSignal = null;
 let signalTimer = null;
 let currentData = null;
+  let signalEntryPrice = null;
+let signalEntryTime = null;
   
 function toast(message){const element=document.getElementById("toast");element.textContent=message;element.classList.add("show");setTimeout(()=>{element.classList.remove("show");},1800);}
 function setSignal(type, reason) {
