@@ -347,6 +347,13 @@ button{
 .loading{
   opacity:.65;
 }
+#expertDemoLog input, #expertDemoLog select {
+  background:var(--card2); color:var(--text); border:1px solid var(--line);
+  border-radius:10px; padding:10px; font:inherit;
+}
+#expertDemoLog button {background:var(--blue);border-radius:10px;padding:12px;width:100%;margin:6px 0;}
+#expertDemoLog .sectionhead {flex-wrap:wrap;gap:6px;}
+#expertDemoLog div {overflow-wrap:anywhere;}
 </style>
 </head>
 <body>
@@ -422,7 +429,7 @@ button{
   <section class="section" id="signalHistory" style="display:none;">
   <div class="sectionhead">
     <b>Signal History</b>
-    <span>Tested signals</span>
+    <span>Twelve Data simulations</span>
   </div>
 
   <div class="premium">
@@ -433,7 +440,7 @@ button{
 </section>
 <section class="section" id="performanceSection">
   <div class="sectionhead">
-    <b>Strategy Performance</b>
+    <b>New Simulation Performance</b>
     <span>Test results</span>
   </div>
 
@@ -557,7 +564,7 @@ button{
     </div>
 
     <div class="section" style="margin-top:14px;">
-      <div class="sectionhead"><b>Strategy Performance</b><span>Resolved signals</span></div>
+      <div class="sectionhead"><b>New Simulation Performance</b><span>Simulated results</span></div>
       <div class="row">
         <div class="metric"><small>Tested</small><b id="profileTested">--</b></div>
         <div class="metric"><small>Wins</small><b id="profileWins">--</b></div>
@@ -569,6 +576,25 @@ button{
       </div>
     </div>
   </section>
+<section class="section" id="expertDemoLog" style="margin-bottom:90px;">
+  <div class="sectionhead"><b>ExpertOption Demo Log</b><span>Manual records</span></div>
+  <p class="sub">EUR/USD • 3-minute demo trades. Saved on this browser only. This log uses the prices you enter; it does not connect to ExpertOption.</p>
+  <label class="sub" for="demoSignalId">Signal ID (optional)</label>
+  <input id="demoSignalId" placeholder="Matching Cloudflare signal" style="width:100%;box-sizing:border-box;margin:6px 0;">
+  <label class="sub" for="demoDirection">Direction</label>
+  <select id="demoDirection" style="width:100%;margin:6px 0;"><option value="CALL">CALL / Up</option><option value="PUT">PUT / Down</option></select>
+  <label class="sub" for="demoEntryPrice">Actual ExpertOption demo entry price</label>
+  <input id="demoEntryPrice" type="number" step="0.00001" min="0" placeholder="Example: 1.12540" style="width:100%;box-sizing:border-box;margin:6px 0;">
+  <button onclick="recordDemoEntry()">Record demo entry now</button>
+  <p class="sub">Record immediately after opening the demo trade. The time recorded here is your click time; check it against ExpertOption.</p>
+  <div id="demoActive" class="sub"></div>
+  <label class="sub" for="demoExitPrice">Actual ExpertOption closing price</label>
+  <input id="demoExitPrice" type="number" step="0.00001" min="0" placeholder="Price shown when the trade finishes" style="width:100%;box-sizing:border-box;margin:6px 0;">
+  <label class="sub" for="demoBrokerResult">Result shown by ExpertOption</label>
+  <select id="demoBrokerResult" style="width:100%;margin:6px 0;"><option value="WIN">WIN</option><option value="LOSS">LOSS</option><option value="PUSH">TIE / REFUND</option></select>
+  <button onclick="completeDemoTrade()">Save completed demo result</button>
+  <div id="demoRecords" style="margin-top:12px;"></div>
+</section>
 </main>
 <nav class="bottom">
   <button class="nav active" data-tab="dashboard" onclick="openDashboard()">⌂<br>Dashboard</button>
@@ -577,6 +603,7 @@ button{
   <button class="nav" data-tab="profile" onclick="openProfile()">◎<br>Profile</button>
 </nav>
 <div class="toast" id="toast"></div>
+
 <script>
 const API_URL = "https://maxxy-market-api.joelizy22.workers.dev/eurusd";
 const MARKET_REFRESH_MS = 120000;
@@ -633,220 +660,128 @@ function setFeed(text){const feed=document.getElementById("feed");feed.textConte
 function calculateEMA(candles,length){if(candles.length<length){return null;}const closes=candles.map(c=>Number(c.close));let ema=closes.slice(0,length).reduce((a,b)=>a+b,0)/length;const multiplier=2/(length+1);for(let i=length;i<closes.length;i++){ema=((closes[i]-ema)*multiplier)+ema;}return ema;}
 function calculateLevels(candles){const recent=candles.slice(-SR_LOOKBACK);const lows=recent.map(c=>Number(c.low));const highs=recent.map(c=>Number(c.high));return{support:Math.min(...lows),resistance:Math.max(...highs)};}
 function candleInfo(candle){const open=Number(candle.open);const high=Number(candle.high);const low=Number(candle.low);const close=Number(candle.close);const body=Math.abs(close-open);const upperWick=high-Math.max(open,close);const lowerWick=Math.min(open,close)-low;const range=high-low;return{open,high,low,close,body,upperWick,lowerWick,range,bullish:close>open,bearish:close<open};}
-function generateSignal(candles){if(candles.length<60){return{type:"WAIT",reason:"Not enough candles for EMA 50 analysis."};}const last=candleInfo(candles[candles.length-1]);const previous=candleInfo(candles[candles.length-2]);const ema=calculateEMA(candles,EMA_LENGTH);const levels=calculateLevels(candles);const range=levels.resistance-levels.support;if(!ema||range<=0){return{type:"WAIT",reason:"Market structure is not clear yet."};}const supportDistance=Math.abs(last.low-levels.support);const resistanceDistance=Math.abs(last.high-levels.resistance);const nearSupport=supportDistance<=range*0.15;const nearResistance=resistanceDistance<=range*0.15;const bullishRejection=last.bullish&&last.lowerWick>=Math.max(last.body*1.2,last.range*0.20);const bearishRejection=last.bearish&&last.upperWick>=Math.max(last.body*1.2,last.range*0.20);const bullishTrend=last.close>ema;const bearishTrend=last.close<ema;if(bullishTrend&&nearSupport&&bullishRejection){return{type:"CALL",reason:"Price is above EMA 50 with bullish rejection near support."};}if(bearishTrend&&nearResistance&&bearishRejection){return{type:"PUT",reason:"Price is below EMA 50 with bearish rejection near resistance."};}const bullishBreak=bullishTrend&&last.close>previous.high&&last.bullish;const bearishBreak=bearishTrend&&last.close<previous.low&&last.bearish;if(bullishBreak){return{type:"CALL",reason:"Bullish breakout confirmed above the previous candle."};}if(bearishBreak){return{type:"PUT",reason:"Bearish breakout confirmed below the previous candle."};}return{type:"WAIT",reason:"No complete EMA + level + candle confirmation yet."};}
 function drawCandles(candles){const container=document.getElementById("candles");const recent=candles.slice(-8);container.innerHTML="";recent.forEach(candle=>{const info=candleInfo(candle);const div=document.createElement("div");div.className="c "+(info.bearish?"red":"up");const wick=document.createElement("i");wick.className="wick";const body=document.createElement("i");body.className="body";div.appendChild(wick);div.appendChild(body);container.appendChild(div);});}
-function addSignalHistory(type, result, reason) {
-  const time = new Date().toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-
-  signalHistory.unshift({
-    type,
-    result,
-    reason,
-    time
-  });
-
-  // Keep only the latest 20 results
-  signalHistory = signalHistory.slice(0, 20);
-
-  renderSignalHistory();
+// Signals and outcomes come only from the Cloudflare Worker.
+const SIGNALS_URL = API_URL.replace(/\/eurusd$/, "/signals");
+let sharedSignals = [];
+let signalSyncPromise = null;
+let serverClockOffset = 0;
+let displayedSignalId = null;
+let sharedEntryAt = null;
+let skippedSignalId = null;
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
-
+function formatTime(value) {
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? new Date(ms).toLocaleString() : "--";
+}
 function renderSignalHistory() {
-  const box = document.getElementById("historyList");
-  if (!box) return;
-
-  if (signalHistory.length === 0) {
-    box.innerHTML = "No completed signals yet.";
+  const records = sharedSignals.slice().reverse().slice(0, 20);
+  const markup = records.length ? records.map(signal => `
+    <div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1);">
+      <b>${escapeHtml(signal.symbol || "EUR/USD")} • ${escapeHtml(signal.direction)}</b>
+      <span style="float:right;"><b>${escapeHtml(signal.outcome || "PENDING")}</b></span>
+      <div class="sub" style="margin-top:6px;">Alert: ${formatTime(signal.signalCreatedAt)}</div>
+      <div style="margin-top:6px;">Entry: ${escapeHtml(signal.entryPrice ?? "--")} • Expiry: ${escapeHtml(signal.expiryPrice ?? "--")}</div>
+      <div class="sub">Reference entry: ${(signal.entryPriceTime ? formatTime(signal.entryPriceTime) : "Not recorded (legacy)")}</div>
+      <div class="sub">Reference expiry: ${formatTime(signal.expiryCandleTime)}</div>
+      <div class="sub">Twelve Data simulation${signal.engineVersion === "scheduled-v3" ? " • Scheduled timing" : " • Legacy timing (unverified)"}</div>
+      <div class="sub" style="margin-top:4px;">${escapeHtml(signal.reason)}</div>
+    </div>`).join("") : "No recorded signals yet.";
+  for (const id of ["historyList", "signalsHistory"]) {
+    const box = document.getElementById(id);
+    if (box) box.innerHTML = markup;
+  }
+}
+function updateSharedCountdown() {
+  const timer = document.getElementById("timer");
+  if (!window.maxxyEntryEndsAt) return;
+  const now = Date.now() + serverClockOffset;
+  if (sharedEntryAt && now < sharedEntryAt) {
+    timer.textContent = "ENTRY IN " + Math.ceil((sharedEntryAt - now) / 1000) + "s";
     return;
   }
-
-  box.innerHTML = signalHistory.map(item => `
-    <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);">
-      <b>${item.type} • EUR/USD — ${item.result}</b><br>
-      <span style="opacity:.7">${item.time} • ${item.reason}</span>
-    </div>
-  `).join("");
-}
-function lockSignal(type,reason){
-
-  signalLocked = true;
-
-  lockedSignal = type;
-
-  if (currentData && currentData.currentCandle) {
-  signalEntryPrice = Number(currentData.currentCandle.close);
-  signalEntryTime = Date.now();
-}
-  
-  clearInterval(signalTimer);
-
-  if (
-    "Notification" in window &&
-    Notification.permission === "granted"
-  ) {
-    new Notification("ʍǟӼӼʏ Trading AI", {
-      body: `${type} • EUR/USD • 3 min\n${reason}`,
-      tag: "maxxy-signal"
-    });
-  }
-
-  setSignal(
-    type,
-    reason
-  );
-
-  const timer =
-    document.getElementById("timer");
-
-  const badge =
-    document.getElementById("badge");
-
-  const entryEndsAt =
-    Date.now() + 180000;
-
-  window.maxxyEntryEndsAt =
-    entryEndsAt;
-
-  timer.className = "";
-
-  badge.textContent = type;
-
-  badge.className =
-    "badge " +
-    (
-      type === "PUT"
-     ? "put"
-      : ""
-    );
-
-  let expiryProcessing = false;
-  async function updateCountdown(){
-
-    const remaining =
-      Math.max(
-        0,
-        window.maxxyEntryEndsAt -
-        Date.now()
-      );
-
-    const seconds =
-      Math.ceil(
-        remaining / 1000
-      );
-
-    if(remaining > 0){
-
-      timer.textContent =
-        seconds + "s";
-
-      return;
-    }
-    if (expiryProcessing) {
-  return;
-}
-
-expiryProcessing = true;
-clearInterval(signalTimer);
-
-    let expiryPrice = null;
-
-try {
-  const expiryData = await getMarketData(true);
-
-  if (
-    expiryData &&
-    Array.isArray(expiryData.values) &&
-    expiryData.values.length > 0
-  ) {
-    const expiryCandles = expiryData.values.slice().reverse();
-    const expiryCandle = expiryCandles[expiryCandles.length - 1];
-
-    expiryPrice = Number(expiryCandle.close);
-  }
-} catch (error) {
-  console.error("Expiry price error:", error);
-}
-
-if (expiryPrice === null || !Number.isFinite(expiryPrice)) {
-  timer.textContent = "CHECKING...";
-
-  expiryProcessing = false;
-
-  signalTimer = setInterval(
-    updateCountdown,
-    2000
-  );
-
-  return;
-}
-
-let result = null;
-if (
-  signalEntryPrice !== null &&
-  expiryPrice !== null &&
-  lockedSignal
-) {
-  if (expiryPrice === signalEntryPrice) {
-    result = "PUSH";
-  } else if (
-    (lockedSignal === "CALL" && expiryPrice > signalEntryPrice) ||
-    (lockedSignal === "PUT" && expiryPrice < signalEntryPrice)
-  ) {
-    result = "WIN";
-  } else {
-    result = "LOSS";
-  }
-}
-    clearInterval(signalTimer);
-
-    if (result && lockedSignal) {
-  addSignalHistory(
-    lockedSignal,
-    result,
-    `Entry: ${signalEntryPrice} • Expiry: ${expiryPrice}`
-  );
-}
+  const remaining = window.maxxyEntryEndsAt - now;
+  timer.textContent = remaining > 0 ? Math.ceil(remaining / 1000) + "s" : "CHECKING...";
+  if (remaining <= 0) {
     signalLocked = false;
-
     lockedSignal = null;
-
-    timer.textContent =
-      "EXPIRED";
-
-    timer.className =
-      "expired";
-
-    const current =
-      document.getElementById("sig")
-       .textContent;
-
-    if(
-      current === "CALL" ||
-      current === "PUT"
-    ){
-
-      document.getElementById("badge")
-       .textContent =
-        "EXPIRED";
-
-      document.getElementById("badge")
-       .className =
-        "badge error";
-    }
+    setSignal("WAIT", "Reference expiry reached. Waiting for Cloudflare to resolve the simulation.");
   }
-
-  updateCountdown();
-
-  signalTimer =
-    setInterval(
-      updateCountdown,
-      250
-    );
 }
-
+function displaySharedSignal() {
+  const now = Date.now() + serverClockOffset;
+  const latest = sharedSignals.slice().sort((a,b) => Date.parse(b.signalCreatedAt) - Date.parse(a.signalCreatedAt))[0];
+  const expiry = latest && Date.parse(latest.expiryCandleTime);
+  const created = latest && Date.parse(latest.signalCreatedAt);
+  const active = latest && ["CALL", "PUT"].includes(latest.direction) && latest.outcome === "PENDING" && expiry > now && created <= now;
+  if (active && latest.engineVersion === "scheduled-v3") {
+    signalLocked = true;
+    lockedSignal = latest.direction;
+    const lateFirstSeen = skippedSignalId === latest.id || (displayedSignalId !== latest.id && now >= Date.parse(latest.entryPriceTime));
+    if (lateFirstSeen) skippedSignalId = latest.id;
+    if (displayedSignalId !== latest.id && now < Date.parse(latest.entryPriceTime) &&
+        "Notification" in window && Notification.permission === "granted") {
+      new Notification("ʍǟӼӼʏ Scheduled Signal", {body: latest.direction + " • EUR/USD • Entry: " + formatTime(latest.entryPriceTime), tag: "maxxy-signal"});
+    }
+    displayedSignalId = latest.id;
+    const demoSignal = document.getElementById("demoSignalId");
+    if (demoSignal) demoSignal.value = latest.id;
+    const demoDirection = document.getElementById("demoDirection");
+    if (demoDirection) demoDirection.value = latest.direction;
+    window.maxxyEntryEndsAt = expiry;
+    sharedEntryAt = Date.parse(latest.entryPriceTime);
+    setSignal(lateFirstSeen ? "WAIT" : latest.direction, (lateFirstSeen ? "Entry time has passed—skip this signal. " : "") + (latest.reason || "") + " • Twelve Data simulation. Scheduled entry: " + formatTime(latest.entryPriceTime) + ". Fixed reference expiry: " + formatTime(latest.expiryCandleTime) + ". Skip late entries; record your ExpertOption demo trade separately.");
+    const latestBox = document.getElementById("signalsLatest");
+    if (latestBox) latestBox.innerHTML = "<b>" + escapeHtml(lateFirstSeen ? "WAIT (entry missed)" : latest.direction) + " • EUR/USD</b><br>" +
+      "<span class='sub'>Alert: " + formatTime(latest.signalCreatedAt) + "<br>Reference expiry: " + formatTime(latest.expiryCandleTime) + "</span><br>" + escapeHtml(latest.reason) + "<br>Twelve Data simulation";
+    clearInterval(signalTimer);
+    updateSharedCountdown();
+    signalTimer = setInterval(updateSharedCountdown, 250);
+  } else {
+    clearInterval(signalTimer);
+    signalLocked = false;
+    lockedSignal = null;
+    window.maxxyEntryEndsAt = null;
+    sharedEntryAt = null;
+    setSignal("WAIT", "No active Cloudflare signal. History contains Twelve Data simulations, not verified ExpertOption trades.");
+    document.getElementById("timer").textContent = "WAIT";
+  }
+}
+async function syncSignals() {
+  if (signalSyncPromise) return signalSyncPromise;
+  signalSyncPromise = (async () => {
+    const response = await fetch(SIGNALS_URL + "?t=" + Date.now(), {cache: "no-store"});
+    if (!response.ok) throw new Error("Could not load Cloudflare signals.");
+    const data = await response.json();
+    if (!data.ok || !Array.isArray(data.signals)) throw new Error("Invalid signal response.");
+    const serverTime = Date.parse(data.serverTime);
+    if (Number.isFinite(serverTime)) serverClockOffset = serverTime - Date.now();
+    sharedSignals = data.signals;
+    displaySharedSignal();
+    renderSignalHistory();
+    renderPerformance();
+  })();
+  try { return await signalSyncPromise; }
+  finally { signalSyncPromise = null; }
+}
+function renderPerformance() {
+  const resolved = sharedSignals.filter(s => s.engineVersion === "scheduled-v3" && ["WIN", "LOSS", "PUSH"].includes(s.outcome));
+  const wins = resolved.filter(s => s.outcome === "WIN").length;
+  const losses = resolved.filter(s => s.outcome === "LOSS").length;
+  const pushes = resolved.filter(s => s.outcome === "PUSH").length;
+  const stats = {statTested: resolved.length, statWins: wins, statLosses: losses, statPushes: pushes,
+    statWinRate: (wins + losses ? (wins / (wins + losses) * 100).toFixed(1) : "0.0") + "%"};
+  for (const [id,value] of Object.entries(stats)) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  }
+}
+async function loadPerformance() {
+  try { await syncSignals(); }
+  catch (error) { console.error(error); toast("Signal history connection error"); }
+}
 document.addEventListener(
   "visibilitychange",
   () => {
@@ -915,7 +850,44 @@ async function getMarketData(force = false) {
   }
 }
 
-async function analyze(force = false){if(signalLocked){return;}setSignal("WAIT","Fetching the latest EUR/USD 1-minute candles...");document.getElementById("timer").textContent="LOADING";setFeed("UPDATING");try{const data=await getMarketData(force);const allCandles=data.values.slice().reverse();const closedCandles=allCandles.slice(0,-1);const currentCandle=allCandles[allCandles.length-1];currentData={allCandles,closedCandles,currentCandle};const latest=closedCandles[closedCandles.length-1];const latestInfo=candleInfo(latest);const ema=calculateEMA(closedCandles,EMA_LENGTH);const levels=calculateLevels(closedCandles);const result=generateSignal(closedCandles);document.getElementById("price").textContent="Price: "+latestInfo.close.toFixed(5);setFeed("LIVE DATA");drawCandles(closedCandles);if(ema){const recent=closedCandles.slice(-20);const min=Math.min(...recent.map(c=>Number(c.low)));const max=Math.max(...recent.map(c=>Number(c.high)));if(max>min){const position=100-((ema-min)/(max-min)*100);document.querySelector(".ema").style.top=Math.max(5,Math.min(95,position))+"%";}}if(levels){document.querySelector(".support").style.bottom="27%";document.querySelector(".resistance").style.top="25%";}if(result.type==="CALL"||result.type==="PUT"){lockSignal(result.type,result.reason);}else{setSignal("WAIT",result.reason);document.getElementById("timer").textContent="WAIT";}toast("Live EUR/USD analysis completed");}catch(error){console.error(error);setFeed("ERROR");setSignal("WAIT","Unable to retrieve live market data. Check the connection and try again.");document.getElementById("timer").textContent="--";toast("Market data connection error");}}
+async function analyze(force = false) {
+  // Chart data cannot create signals or score trades in the browser.
+  try {
+    const data = await getMarketData(force);
+    const allCandles = data.values.slice().reverse();
+    const now = Date.now();
+    const closedCandles = allCandles.filter(c => {
+      const start = Date.parse(c.datetime.replace(" ", "T") + (/[Z]|[+-]\d{2}:?\d{2}$/.test(c.datetime) ? "" : "Z"));
+      return Number.isFinite(start) && start + 60000 <= now;
+    });
+    if (!closedCandles.length) throw new Error("No closed candles.");
+    currentData = {allCandles, closedCandles, currentCandle: allCandles[allCandles.length - 1]};
+    const latest = candleInfo(closedCandles[closedCandles.length - 1]);
+    document.getElementById("price").textContent = "Reference price: " + latest.close.toFixed(5);
+    setFeed("TWELVE DATA");
+    drawCandles(closedCandles);
+    const ema = calculateEMA(closedCandles, EMA_LENGTH);
+    const recent = closedCandles.slice(-20);
+    const min = Math.min(...recent.map(c => Number(c.low)));
+    const max = Math.max(...recent.map(c => Number(c.high)));
+    if (ema && max > min) document.querySelector(".ema").style.top = Math.max(5, Math.min(95, 100 - ((ema-min)/(max-min)*100))) + "%";
+  } catch (error) {
+    console.error(error);
+    setFeed("ERROR");
+    toast("Market data connection error");
+  }
+  try { await syncSignals(); }
+  catch (error) {
+    console.error(error);
+    clearInterval(signalTimer);
+    signalLocked = false;
+    lockedSignal = null;
+    window.maxxyEntryEndsAt = null;
+    sharedEntryAt = null;
+    setSignal("WAIT", "Signal connection unavailable. Reconnecting...");
+    document.getElementById("timer").textContent = "--";
+  }
+}
 async function notifyMe() {
   toast("🔔 Telegram signal alerts are enabled.");
 }
@@ -949,114 +921,16 @@ function calculateRisk() {
     percent +
     "% of your account)";
 }
+function premium(){toast("Premium waitlist coming next.");}
 async function history() {
   const panel = document.getElementById("signalHistory");
-  const list = document.getElementById("historyList");
-
-  if (panel.style.display !== "none") {
-    panel.style.display = "none";
-    return;
-  }
-
+  if (panel.style.display !== "none") { panel.style.display = "none"; return; }
   panel.style.display = "block";
-  list.innerHTML = "Loading signal history...";
-  panel.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  try {
-    const response = await fetch(
-      "https://maxxy-market-api.joelizy22.workers.dev/signals"
-    );
-
-    if (!response.ok) {
-      throw new Error("Could not load signal history.");
-    }
-
-    const data = await response.json();
-    const signals = Array.isArray(data.signals) ? data.signals : [];
-
-    if (signals.length === 0) {
-      list.innerHTML = "No tested signals yet.";
-      return;
-    }
-
-    const recentSignals = signals.slice().reverse().slice(0, 20);
-
-    list.innerHTML = recentSignals.map(signal => {
-      const outcome = signal.outcome || "PENDING";
-      const entry =
-        signal.entryPrice != null ? signal.entryPrice : "--";
-      const expiry =
-        signal.expiryPrice != null ? signal.expiryPrice : "--";
-
-      const time = signal.signalCreatedAt
-        ? new Date(signal.signalCreatedAt).toLocaleString()
-        : "--";
-
-      return `
-        <div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1);">
-          <b>${signal.symbol || "EUR/USD"} • ${signal.direction || "--"}</b>
-          <span style="float:right;"><b>${outcome}</b></span>
-          <div class="sub" style="margin-top:6px;">
-            ${time}
-          </div>
-          <div style="margin-top:6px;">
-            Entry: ${entry} • Expiry: ${expiry}
-          </div>
-          <div class="sub" style="margin-top:4px;">
-            ${signal.reason || ""}
-          </div>
-        </div>
-      `;
-    }).join("");
-
-  } catch (error) {
-    console.error("Signal history error:", error);
-    list.innerHTML = "Unable to load signal history right now.";
-  }
+  panel.scrollIntoView({behavior: "smooth", block: "start"});
+  try { await syncSignals(); }
+  catch (error) { document.getElementById("historyList").textContent = "Unable to load signal history right now."; }
 }
-function premium(){toast("Premium waitlist coming next.");}
-  async function loadPerformance() {
-  try {
-    const response = await fetch(
-      "https://maxxy-market-api.joelizy22.workers.dev/signals"
-    );
 
-    if (!response.ok) {
-      throw new Error("Could not load performance data.");
-    }
-
-    const data = await response.json();
-    const signals = Array.isArray(data.signals) ? data.signals : [];
-
-    const resolved = signals.filter(signal =>
-      ["WIN", "LOSS", "PUSH"].includes(signal.outcome)
-    );
-
-    const wins = resolved.filter(signal => signal.outcome === "WIN").length;
-    const losses = resolved.filter(signal => signal.outcome === "LOSS").length;
-    const pushes = resolved.filter(signal => signal.outcome === "PUSH").length;
-
-    const decisiveTrades = wins + losses;
-    const winRate = decisiveTrades > 0
-      ? ((wins / decisiveTrades) * 100).toFixed(1)
-      : "0.0";
-
-    document.getElementById("statTested").textContent = resolved.length;
-    document.getElementById("statWins").textContent = wins;
-    document.getElementById("statLosses").textContent = losses;
-    document.getElementById("statPushes").textContent = pushes;
-    document.getElementById("statWinRate").textContent = winRate + "%";
-
-  } catch (error) {
-    console.error("Performance data error:", error);
-
-    document.getElementById("statTested").textContent = "--";
-    document.getElementById("statWins").textContent = "--";
-    document.getElementById("statLosses").textContent = "--";
-    document.getElementById("statPushes").textContent = "--";
-    document.getElementById("statWinRate").textContent = "--";
-  }
-}
   function setActiveNav(tab) {
   document.querySelectorAll(".bottom .nav").forEach(button => {
     button.classList.toggle("active", button.dataset.tab === tab);
@@ -1177,22 +1051,9 @@ function closeSignals() {
 }
 
 function loadSignalsPage() {
-  const latestBox = document.getElementById("signalsLatest");
-
-  if (latestBox) {
-    if (lockedSignal) {
-      latestBox.innerHTML =
-        "<b>" + lockedSignal + " • EUR/USD</b><br>" +
-        "<span style='opacity:.7'>Current locked trading signal</span>";
-    } else {
-      latestBox.innerHTML =
-        "<b>WAIT • EUR/USD</b><br>" +
-        "<span style='opacity:.7'>Waiting for the next confirmed signal...</span>";
-    }
-  }
-
   renderSignalHistory();
-}  
+  syncSignals().catch(error => console.error(error));
+}
   function selectMarket(symbol) {
   if (symbol !== "EUR/USD") {
     toast("This market is coming soon.");
@@ -1202,8 +1063,72 @@ function loadSignalsPage() {
   closeMarkets();
   toast("EUR/USD is the active market.");
 }
+const DEMO_STORAGE_KEY = "maxxy_expertoption_demo_v1";
+let demoTrades = [];
+try {
+  const saved = JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || "[]");
+  if (Array.isArray(saved)) demoTrades = saved.filter(t => t && t.id && ["CALL", "PUT"].includes(t.direction));
+} catch (error) { console.error("Could not load demo records", error); }
+function persistDemoTrades(next) {
+  try { localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(next)); demoTrades = next; return true; }
+  catch (error) { toast("Could not save demo record on this browser."); return false; }
+}
+function recordDemoEntry() {
+  if (demoTrades.some(t => t.result === "PENDING")) { toast("Finish the current demo record first."); return; }
+  const entryPrice = Number(document.getElementById("demoEntryPrice").value);
+  if (!Number.isFinite(entryPrice) || entryPrice <= 0) { toast("Enter the actual demo entry price."); return; }
+  const enteredAt = Date.now();
+  const record = {id: String(enteredAt), symbol: "EUR/USD", direction: document.getElementById("demoDirection").value,
+    signalId: document.getElementById("demoSignalId").value.trim(), entryPrice,
+    entryRecordedAt: new Date(enteredAt).toISOString(), expectedExpiry: new Date(enteredAt + 180000).toISOString(),
+    result: "PENDING", source: "EXPERTOPTION_DEMO_USER_ENTERED"};
+  if (persistDemoTrades([record, ...demoTrades].slice(0, 100))) { renderDemoTrades(); toast("Demo entry recorded."); }
+}
+function completeDemoTrade() {
+  const pending = demoTrades.find(t => t.result === "PENDING");
+  if (!pending) { toast("Record a demo entry first."); return; }
+  const exitPrice = Number(document.getElementById("demoExitPrice").value);
+  if (!Number.isFinite(exitPrice) || exitPrice <= 0) { toast("Enter the actual closing price."); return; }
+  const brokerResult = document.getElementById("demoBrokerResult").value;
+  if (!["WIN", "LOSS", "PUSH"].includes(brokerResult)) return;
+  const comparison = exitPrice === pending.entryPrice ? "PUSH" :
+    ((pending.direction === "CALL" && exitPrice > pending.entryPrice) || (pending.direction === "PUT" && exitPrice < pending.entryPrice) ? "WIN" : "LOSS");
+  const updated = {...pending, exitPrice, result: brokerResult, priceComparison: comparison, resultRecordedAt: new Date().toISOString()};
+  if (persistDemoTrades(demoTrades.map(t => t.id === pending.id ? updated : t))) { renderDemoTrades(); toast("Demo result saved."); }
+}
+function renderDemoTrades() {
+  const active = demoTrades.find(t => t.result === "PENDING");
+  const activeBox = document.getElementById("demoActive");
+  if (activeBox) activeBox.textContent = active ? "Recorded " + active.direction + " entry: " + active.entryPrice + ". Estimated expiry: " + formatTime(active.expectedExpiry) + ". Use ExpertOption's displayed expiry/result." : "No pending demo record.";
+  const box = document.getElementById("demoRecords");
+  if (box) box.innerHTML = demoTrades.slice(0, 20).map(t => `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.1);">
+    <b>${escapeHtml(t.direction)} • ${escapeHtml(t.result)}</b><br>
+    <span class="sub">User-entered ExpertOption demo result<br>Entry recorded: ${formatTime(t.entryRecordedAt)}<br>
+    Entry: ${escapeHtml(t.entryPrice)} • Close: ${escapeHtml(t.exitPrice ?? "--")}<br>
+    Signal: ${escapeHtml(t.signalId || "Not linked")}${t.priceComparison && t.priceComparison !== t.result ? "<br>Price comparison differs from entered platform result—check the record." : ""}</span>
+  </div>`).join("") || "No demo trades recorded.";
+}
+renderDemoTrades();
+
 analyze();
 loadPerformance();
+setInterval(() => {
+  if (document.visibilityState === "visible") {
+    syncSignals().catch(error => {
+      console.error(error);
+      clearInterval(signalTimer);
+      window.maxxyEntryEndsAt = null;
+    sharedEntryAt = null;
+      signalLocked = false;
+      lockedSignal = null;
+      setSignal("WAIT", "Signal connection unavailable. Reconnecting...");
+      document.getElementById("timer").textContent = "--";
+    });
+  }
+}, 10000);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") loadPerformance();
+});
 
 setInterval(() => {
   if (document.visibilityState === "visible") {
