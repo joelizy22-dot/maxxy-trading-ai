@@ -578,6 +578,7 @@ button{
   </section>
 <section class="section" id="expertDemoLog" style="margin-bottom:90px;">
   <div class="sectionhead"><b>ExpertOption Demo Log</b><span>Manual records</span></div>
+  <p class="sub" id="engineDiagnostic">Checking signal engine...</p>
   <p class="sub">EUR/USD • 3-minute demo trades. Saved on this browser only. This log uses the prices you enter; it does not connect to ExpertOption.</p>
   <label class="sub" for="demoSignalId">Signal ID (optional)</label>
   <input id="demoSignalId" placeholder="Matching Cloudflare signal" style="width:100%;box-sizing:border-box;margin:6px 0;">
@@ -664,6 +665,7 @@ function drawCandles(candles){const container=document.getElementById("candles")
 // Signals and outcomes come only from the Cloudflare Worker.
 const SIGNALS_URL = API_URL.replace(/\/eurusd$/, "/signals");
 let sharedSignals = [];
+let engineStatus = null;
 let signalSyncPromise = null;
 let serverClockOffset = 0;
 let displayedSignalId = null;
@@ -674,7 +676,7 @@ function escapeHtml(value) {
 }
 function formatTime(value) {
   const ms = Date.parse(value);
-  return Number.isFinite(ms) ? new Date(ms).toLocaleString() : "--";
+  return Number.isFinite(ms) ? new Date(ms).toLocaleString("en-GB", {timeZone:"Africa/Lagos"}) + " WAT" : "--";
 }
 function renderSignalHistory() {
   const records = sharedSignals.slice().reverse().slice(0, 20);
@@ -715,7 +717,7 @@ function displaySharedSignal() {
   const latest = sharedSignals.slice().sort((a,b) => Date.parse(b.signalCreatedAt) - Date.parse(a.signalCreatedAt))[0];
   const expiry = latest && Date.parse(latest.expiryCandleTime);
   const created = latest && Date.parse(latest.signalCreatedAt);
-  const active = latest && ["CALL", "PUT"].includes(latest.direction) && latest.outcome === "PENDING" && expiry > now && created <= now;
+  const active = (!engineStatus || engineStatus.state !== "PAUSED") && latest && ["CALL", "PUT"].includes(latest.direction) && latest.outcome === "PENDING" && expiry > now && created <= now;
   if (active && latest.engineVersion === "scheduled-v3") {
     signalLocked = true;
     lockedSignal = latest.direction;
@@ -745,7 +747,7 @@ function displaySharedSignal() {
     lockedSignal = null;
     window.maxxyEntryEndsAt = null;
     sharedEntryAt = null;
-    setSignal("WAIT", "No active Cloudflare signal. History contains Twelve Data simulations, not verified ExpertOption trades.");
+    setSignal("WAIT", engineStatus?.reason || "No active Cloudflare signal. History contains Twelve Data simulations, not verified ExpertOption trades.");
     document.getElementById("timer").textContent = "WAIT";
   }
 }
@@ -759,6 +761,11 @@ async function syncSignals() {
     const serverTime = Date.parse(data.serverTime);
     if (Number.isFinite(serverTime)) serverClockOffset = serverTime - Date.now();
     sharedSignals = data.signals;
+    engineStatus = data.engineStatus || null;
+    const diagnostic = document.getElementById("engineDiagnostic");
+    if (diagnostic) diagnostic.textContent = (engineStatus?.state || "UNKNOWN") + " • " + (engineStatus?.reason || "Diagnostics unavailable") +
+      " Last check: " + formatTime(engineStatus?.lastCheckAt) + ". ExpertOption availability is not connected.";
+    if (engineStatus?.state === "PAUSED") setFeed("PAUSED");
     displaySharedSignal();
     renderSignalHistory();
     renderPerformance();
